@@ -1,0 +1,33 @@
+name: Lint
+
+on: [push, pull_request]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+
+      - name: Install dependencies
+        run: poetry install --with dev
+
+      - name: Run black
+        run: poetry run black . --check
+
+      - name: Run isort
+        run: poetry run isort . --check-only --diff
+
+      - name: Check if any files were modified
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "Some files were modified by black/isort. Please run them locally and commit the changes."
+            exit 1
+          fi

@@ -3,7 +3,7 @@ import platform
 import subprocess
 from pathlib import Path
 
-_APP_NAME = "Musa"
+_APP_NAME = "musa"
 
 
 def check_requirements():
@@ -60,7 +60,7 @@ def build_application():
     else:
         output_dir = f"dist/{_APP_NAME}"
 
-    print(f"Build completed! Ouput directory: {output_dir}")
+    print(f"Build completed! Output directory: {output_dir}")
     return True
 
 
