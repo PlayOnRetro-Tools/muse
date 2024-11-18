@@ -544,6 +544,21 @@ test = ["build[virtualenv] (>=1.0.3)", "filelock (>=3.4.0)", "ini2toml[lite] (>=
 type = ["importlib-metadata (>=7.0.2)", "jaraco.develop (>=7.21)", "mypy (>=1.12,<1.14)", "pytest-mypy"]
 
 [[package]]
+name = "sip"
+version = "6.8.6"
+description = "A Python bindings generator for C/C++ libraries"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "sip-6.8.6-py3-none-any.whl", hash = "sha256:3d715cb29396db8ff5258cfd2082dc24a75ed0821d9c3d53acccdc83a7f2617f"},
+    {file = "sip-6.8.6.tar.gz", hash = "sha256:7fc959e48e6ec5d5af8bd026f69f5e24d08b3cb8abb342176f5ab8030cc07d7a"},
+]
+
+[package.dependencies]
+packaging = "*"
+setuptools = "*"
+
+[[package]]
 name = "virtualenv"
 version = "20.27.1"
 description = "Virtual Python Environment builder"
@@ -566,4 +581,4 @@ test = ["covdefaults (>=2.3)", "coverage (>=7.2.7)", "coverage-enable-subprocess
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.12,<3.14"
-content-hash = "c9025e669d2e2ee31d12939f61309e22017b4e01f3ec4d0261a2c4aebe0aa064"
+content-hash = "a7a7bc853fab9324308ebbea29a0741c083852ee7e49bebe26dc4d4755f6ff4e"

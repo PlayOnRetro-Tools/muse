@@ -11,6 +11,7 @@ python = ">=3.12,<3.14"
 pyqt5 = "^5.15.11"
 pyqt5-stubs = "^5.15.6.0"
 qtmodern = "^0.2.0"
+sip = "^6.8.6"
 
 
 [tool.poetry.group.dev.dependencies]

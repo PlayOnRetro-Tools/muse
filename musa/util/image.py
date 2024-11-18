@@ -1,0 +1,196 @@
+import random
+from typing import List
+
+import sip
+from PyQt5.QtCore import QPoint, QRectF, QSize, Qt
+from PyQt5.QtGui import QColor, QImage, QPainter, QPainterPath, QPixmap
+from PyQt5.QtWidgets import QGraphicsItem, QGraphicsPixmapItem, QGraphicsScene
+
+
+class Image:
+    @staticmethod
+    def flatten(pixmaps: List[QPixmap], size: QSize) -> QPixmap:
+        result = QPixmap(size)
+        result.fill(Qt.transparent)
+        painter = QPainter(result)
+
+        for pixmap in pixmaps:
+            painter.drawPixmap(0, 0, pixmap)
+        painter.end()
+
+        return result
+
+    @staticmethod
+    def checker_board(size: QSize, check_size: int = 32) -> QPixmap:
+        background = QPixmap(size)
+        background.fill(Qt.transparent)
+        painter = QPainter(background)
+
+        dark = QColor("#404040")
+        light = QColor("#666666")
+
+        w = size.width()
+        h = size.height()
+        for x in range(0, w, check_size):
+            for y in range(0, h, check_size):
+                is_dark = (x / check_size + y / check_size) % 2
+                color = dark if is_dark else light
+                painter.fillRect(QRectF(x, y, check_size, check_size), color)
+
+        painter.end()
+        return background
+
+    @staticmethod
+    def grid(
+        size: QSize, width: int, height: int, offset_x: int = 0, offset_y: int = 0
+    ) -> QPixmap:
+        grid_pixmap = QPixmap(size)
+        grid_pixmap.fill(Qt.transparent)
+        painter = QPainter(grid_pixmap)
+        painter.setPen(Qt.red)
+
+        for x in range(offset_x, size.width(), width):
+            painter.drawLine(x, offset_y, x, size.height())  # Vertical
+        for y in range(offset_y, size.height(), height):
+            painter.drawLine(offset_x, y, size.width(), y)  # Horizontal
+
+        painter.end()
+        return grid_pixmap
+
+    @staticmethod
+    def remove_background(image: QImage, bg_color: QColor):
+        pixmap = QPixmap.fromImage(image)
+        pixmap.setMask(pixmap.createMaskFromColor(bg_color))
+
+        return pixmap.toImage()
+
+    @staticmethod
+    def is_transparent(image: QImage) -> bool:
+        if image.format() != QImage.Format_ARGB32:
+            image.convertToFormat(QImage.Format_ARGB32)
+
+        bytes_per_line = image.bytesPerLine()
+
+        for y in range(image.height()):
+            ptr = image.scanLine(y)
+            buffer = sip.voidptr(ptr, bytes_per_line)
+            line_bytes = bytes(buffer)
+            # Check alpha channel (every 4th byte)
+            for alpha in line_bytes[3:4]:
+                if alpha > 0:
+                    return False
+        return True
+
+    @staticmethod
+    def set_alpha(alpha: int, pixmap: QPixmap) -> QPixmap:
+        transparent = QPixmap(pixmap.size())
+        transparent.fill(Qt.transparent)
+
+        with QPainter(transparent) as painter:
+            painter.setOpacity((100 - alpha) * 0.01)
+            painter.drawPixmap(QPoint(), pixmap)
+
+        return transparent
+
+    @staticmethod
+    def set_tint(alpha: int, tint: QColor, pixmap: QPixmap) -> QPixmap:
+        alpha_mask = Image.setAlpha(alpha, pixmap)
+        tinted = QPixmap(alpha_mask)
+
+        with QPainter(alpha_mask) as painter:
+            painter.setCompositionMode(QPainter.CompositionMode_SourceIn)
+            painter.fillRect(pixmap.rect(), tint)
+
+        with QPainter(tinted) as painter:
+            painter.setCompositionMode(QPainter.CompositionMode_Overlay)
+            painter.drawPixmap(QPoint(0, 0), alpha_mask, alpha_mask.rect())
+
+        return tinted
+
+    @staticmethod
+    def flip_horizontal(item: QGraphicsItem) -> None:
+        transform = item.transform()
+        m11 = transform.m11()  # Horizontal scaling
+        m12 = transform.m12()  # Vertical shearing
+        m13 = transform.m13()  # Horizontal Projection
+        m21 = transform.m21()  # Horizontal shearing
+        m22 = transform.m22()  # vertical scaling
+        m23 = transform.m23()  # Vertical Projection
+        m31 = transform.m31()  # Horizontal Position (DX)
+        m32 = transform.m32()  # Vertical Position (DY)
+        m33 = transform.m33()  # Additional Projection Factor
+
+        m31 = 0 if m31 > 0 else item.boundingRect().width() * m11
+
+        transform.setMatrix(-m11, m12, m13, m21, m22, m23, m31, m32, m33)
+        item.setTransform(transform)
+
+    @staticmethod
+    def flip_vertical(item: QGraphicsItem) -> None:
+        transform = item.transform()
+        m11 = transform.m11()  # Horizontal scaling
+        m12 = transform.m12()  # Vertical shearing
+        m13 = transform.m13()  # Horizontal Projection
+        m21 = transform.m21()  # Horizontal shearing
+        m22 = transform.m22()  # vertical scaling
+        m23 = transform.m23()  # Vertical Projection
+        m31 = transform.m31()  # Horizontal Position (DX)
+        m32 = transform.m32()  # Vertical Position (DY)
+        m33 = transform.m33()  # Additional Projection Factor
+
+        m32 = 0 if m32 > 0 else item.boundingRect().height() * m22
+
+        transform.setMatrix(m11, m12, m13, m21, -m22, m23, m31, m32, m33)
+        item.setTransform(transform)
+
+    @staticmethod
+    def outline(pixmap: QPixmap) -> QPainterPath:
+        return QGraphicsPixmapItem(pixmap).shape().simplified()
+
+    @staticmethod
+    def thumbnail_from_scene(scene: QGraphicsScene) -> QImage:
+        scene.clearSelection()
+        image = QImage(QSize(160, 112), QImage.Format_ARGB32)
+        image.fill(Qt.transparent)
+
+        with QPainter(image) as painter:
+            painter.setRenderHint(QPainter.Antialiasing)
+            scene.render(
+                painter,
+                QRectF(0, 0, 160, 112),
+                scene.itemsBoundingRect(),
+                Qt.KeepAspectRatio,
+            )
+
+        return image
+
+    @staticmethod
+    def random_color() -> QColor:
+        color = [
+            random.randint(0, 255),
+            random.randint(0, 255),
+            random.randint(0, 255),
+        ]
+        return QColor(*color)
+
+    @staticmethod
+    def extract_sprites(
+        image: QImage,
+        frame_width: int,
+        frame_height: int,
+        offset_x: int = 0,
+        offset_y: int = 0,
+    ) -> List[QPixmap]:
+        cols = (image.width() - offset_x) // frame_width
+        rows = (image.height() - offset_y) // frame_height
+
+        sprites = []
+
+        for row in range(rows):
+            for col in range(cols):
+                x = (col * frame_width) + offset_x
+                y = (row * frame_height) + offset_y
+                sprite = image.copy(x, y, frame_width, frame_height)
+                if not Image.is_transparent(sprite):
+                    sprites.append(QPixmap.fromImage(sprite))
+        return sprites

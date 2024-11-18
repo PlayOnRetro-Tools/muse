@@ -7,7 +7,7 @@ class MusaMainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setMinimumSize(800, 600)
-        self.setWindowTitle("Musa")
+        self.setWindowTitle("Muse")
         self.setup_ui()
 
         file = FileDialogFactory.open_image()

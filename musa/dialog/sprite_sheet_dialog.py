@@ -1,7 +1,8 @@
 from pathlib import Path
+from typing import List
 
-from PyQt5.QtCore import QRegExp, Qt
-from PyQt5.QtGui import QImage, QPainter, QPixmap, QRegExpValidator
+from PyQt5.QtCore import QPoint, QRegExp, Qt
+from PyQt5.QtGui import QImage, QPixmap, QRegExpValidator
 from PyQt5.QtWidgets import (
     QDialog,
     QHBoxLayout,
@@ -15,6 +16,8 @@ from PyQt5.QtWidgets import (
 )
 
 from musa.model.types import Point, Size
+from musa.util.image import Image
+from musa.widget import ClickableImageLabel, ColorPickerButton
 
 
 class SpriteSheetDialog(QDialog):
@@ -22,25 +25,41 @@ class SpriteSheetDialog(QDialog):
         super().__init__(parent)
         self.image_path = image_path
         self.image = QImage(image_path.resolve().as_posix())
+
+        # Cache checker board image
+        self.checker = Image.checker_board(self.image.size())
+
         self.frame_size = Size(32, 32)  # Default size
         self.offset = Point(0, 0)
         self.setup_ui()
+
         self.update_display()
 
     def setup_ui(self):
-        self.setWindowTitle("Sprite Sheet Extractor")
+        self.setWindowTitle("Sprite Sheet Extract")
         self.setWindowModality(Qt.WindowModality.ApplicationModal)
 
         main_layout = QHBoxLayout()
         right_layout = QVBoxLayout()
         left_layout = QVBoxLayout()
 
+        # Alpha channel
+        alpha_layout = QHBoxLayout()
+        alpha_layout.addWidget(QLabel("Alpha:"))
+        self.alpha_btn = ColorPickerButton(self)
+        alpha_layout.addWidget(self.alpha_btn)
+        left_layout.addLayout(alpha_layout)
+
         # Sprite sheet display
-        self.sprite_sheet_area = QScrollArea()
-        self.sprite_sheet_area.setMouseTracking(True)
-        self.sprite_sheet = QLabel()
-        self.sprite_sheet_area.setWidget(self.sprite_sheet)
-        left_layout.addWidget(self.sprite_sheet_area)
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setMouseTracking(True)
+        self.display = ClickableImageLabel(self.scroll_area)
+        self.display.clickedAt.connect(self.pick_alpha_color)
+        self.scroll_area.setWidget(self.display)
+        left_layout.addWidget(self.scroll_area)
+
+        # Connect signals
+        self.alpha_btn.clicked.connect(lambda clicked: self.pick_alpha())
 
         # Frame size input
         size_layout = QHBoxLayout()
@@ -101,30 +120,36 @@ class SpriteSheetDialog(QDialog):
         main_layout.addLayout(right_layout)
         self.setLayout(main_layout)
 
+    def pick_alpha(self):
+        self.display.toggle_click()
+
+    def pick_alpha_color(self, pos: QPoint):
+        self.display.toggle_click()
+        color = self.image.pixelColor(pos.x(), pos.y())
+        self.alpha_btn.set_color(color)
+
+        # Update the image
+        self.image = Image.remove_background(self.image, color)
+        self.update_display()
+
     def update_frame_size(self):
         self.frame_size = Size(self.width_spin.value(), self.height_spin.value())
         self.offset = Point(self.offset_x_spin.value(), self.offset_y_spin.value())
         self.update_display()
 
     def update_display(self):
-        if self.sprite_sheet is None:
-            return
+        pixmap = QPixmap.fromImage(self.image)
+        grid = Image.grid(
+            pixmap.size(),
+            self.frame_size.w,
+            self.frame_size.h,
+            self.offset.x,
+            self.offset.y,
+        )
 
-        # Create a new pixmap to draw the grid
-        pixmap = QPixmap(self.image)
-        painter = QPainter(pixmap)
-
-        # Draw grid
-        painter.setPen(Qt.red)
-        for x in range(self.offset.x, pixmap.width(), self.frame_size.w):
-            painter.drawLine(x, 0, x, pixmap.height())
-        for y in range(self.offset.y, pixmap.height(), self.frame_size.h):
-            painter.drawLine(0, y, pixmap.width(), y)
-
-        painter.end()
-
-        self.sprite_sheet.setPixmap(pixmap)
-        self.sprite_sheet.setFixedSize(pixmap.size())
+        result = Image.flatten([self.checker, pixmap, grid], pixmap.size())
+        self.display.setFixedSize(result.size())
+        self.display.setPixmap(result)
 
     def validate_extract(self):
         width = self.width_spin.value()
@@ -138,4 +163,13 @@ class SpriteSheetDialog(QDialog):
             )
             return
 
-        # self.extract_sprites(width, height)
+        self.sprites = self.get_sprites()
+
+    def get_sprites(self) -> List[QPixmap]:
+        return Image.extract_sprites(
+            self.image,
+            self.frame_size.w,
+            self.frame_size.h,
+            self.offset.x,
+            self.offset.y,
+        )
