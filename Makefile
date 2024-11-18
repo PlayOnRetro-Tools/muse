@@ -9,8 +9,8 @@ PY_RESOURCES := $(QRC_FILES:$(QRC_DIR)/%.qrc=musa/resources/%.py)
 
 help:
 	@echo "Available tagets:"
-	@echo "	install 	- Install project dependencies"
-	@echo " clean 		- Remove build artifacts and cached files"
+	@echo " install		- Install project dependencies"
+	@echo " clean		- Remove build artifacts and cached files"
 	@echo " build		- Build the application"
 	@echo " run 		- Run the application locally"
 	@echo "	lint 		- Format the code"
@@ -37,7 +37,7 @@ build: clean resources
 	@$(POETRY) build
 
 run:
-	@$(POETRY) run python musa/__main__.py
+	@$(POETRY) run python -m musa
 
 lint:
 	@$(POETRY) run black .

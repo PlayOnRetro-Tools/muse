@@ -1,5 +1,6 @@
-from dialog import FileDialogFactory
 from PyQt5.QtWidgets import QMainWindow
+
+from musa.dialog import FileDialogFactory, SpriteSheetDialog
 
 
 class MusaMainWindow(QMainWindow):
@@ -10,6 +11,9 @@ class MusaMainWindow(QMainWindow):
         self.setup_ui()
 
         file = FileDialogFactory.open_image()
+        if file:
+            dialog = SpriteSheetDialog(file, self)
+            dialog.exec_()
 
     def setup_ui(self):
         pass

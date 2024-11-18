@@ -3,7 +3,8 @@ import sys
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication
 from qtmodern import styles
-from view import MusaMainWindow as Win
+
+from musa.view import MusaMainWindow as Win
 
 
 def main():

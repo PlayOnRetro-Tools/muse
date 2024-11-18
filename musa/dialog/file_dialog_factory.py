@@ -44,6 +44,6 @@ class FileDialogFactory:
         dialog = ImageFileDialog(
             None, "Open Sprite Sheet Image...", "", "Image Files (*.png)"
         )
-        if dialog.exec_() == QFileDialog.accepted:
-            file = dialog.selectedFiles()[0]
+        if dialog.exec_() == ImageFileDialog.Accepted:
+            file = dialog.get_file_selected()
             return Path(file)

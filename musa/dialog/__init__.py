@@ -1,1 +1,2 @@
 from .file_dialog_factory import FileDialogFactory
+from .sprite_sheet_dialog import SpriteSheetDialog
