@@ -42,17 +42,35 @@ class Image:
 
     @staticmethod
     def grid(
-        size: QSize, width: int, height: int, offset_x: int = 0, offset_y: int = 0
+        size: QSize,
+        frame_width: int,
+        frame_height: int,
+        offset_x: int = 0,
+        offset_y: int = 0,
+        space_x: int = 0,
+        space_y: int = 0,
     ) -> QPixmap:
         grid_pixmap = QPixmap(size)
         grid_pixmap.fill(Qt.transparent)
         painter = QPainter(grid_pixmap)
-        painter.setPen(Qt.red)
+        painter.setPen(QColor(255, 255, 255, 100))
 
-        for x in range(offset_x, size.width(), width):
-            painter.drawLine(x, offset_y, x, size.height())  # Vertical
-        for y in range(offset_y, size.height(), height):
-            painter.drawLine(offset_x, y, size.width(), y)  # Horizontal
+        # Compute number of rows and cols
+        img_width = size.width() - offset_x
+        img_height = size.height() - offset_y
+
+        total_width = frame_width + space_x
+        total_height = frame_height + space_y
+
+        cols = (img_width + space_x) // total_width
+        rows = (img_height + space_y) // total_height
+
+        # Draw frame boundaries
+        for row in range(rows):
+            for col in range(cols):
+                x = offset_x + col * total_width
+                y = offset_y + row * total_height
+                painter.drawRect(x, y, frame_width, frame_height)
 
         painter.end()
         return grid_pixmap

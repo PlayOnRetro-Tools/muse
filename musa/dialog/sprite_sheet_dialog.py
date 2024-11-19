@@ -5,6 +5,7 @@ from PyQt5.QtCore import QPoint, QRegExp, Qt
 from PyQt5.QtGui import QImage, QPixmap, QRegExpValidator
 from PyQt5.QtWidgets import (
     QDialog,
+    QGroupBox,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -17,7 +18,7 @@ from PyQt5.QtWidgets import (
 
 from musa.model.types import Point, Size
 from musa.util.image import Image
-from musa.widget import ClickableImageLabel, ColorPickerButton
+from musa.widget import ColorPickerButton, MagnifiyingCanvasLabel
 
 
 class SpriteSheetDialog(QDialog):
@@ -31,6 +32,8 @@ class SpriteSheetDialog(QDialog):
 
         self.frame_size = Size(32, 32)  # Default size
         self.offset = Point(0, 0)
+        self.spacing = Point(0, 0)
+
         self.setup_ui()
 
         self.update_display()
@@ -47,14 +50,16 @@ class SpriteSheetDialog(QDialog):
         alpha_layout = QHBoxLayout()
         alpha_layout.addWidget(QLabel("Alpha:"))
         self.alpha_btn = ColorPickerButton(self)
+        self.alpha_btn.setToolTip("Pick background color as transparent")
         alpha_layout.addWidget(self.alpha_btn)
+        alpha_layout.addStretch()
         left_layout.addLayout(alpha_layout)
 
         # Sprite sheet display
         self.scroll_area = QScrollArea()
         self.scroll_area.setMouseTracking(True)
-        self.display = ClickableImageLabel(self.scroll_area)
-        self.display.clickedAt.connect(self.pick_alpha_color)
+        self.display = MagnifiyingCanvasLabel(self.scroll_area)
+        self.display.clicked.connect(self.pick_alpha_color)
         self.scroll_area.setWidget(self.display)
         left_layout.addWidget(self.scroll_area)
 
@@ -62,48 +67,79 @@ class SpriteSheetDialog(QDialog):
         self.alpha_btn.clicked.connect(lambda clicked: self.pick_alpha())
 
         # Frame size input
+        frame_size_group = QGroupBox("Frame Size")
         size_layout = QHBoxLayout()
-        size_layout.addWidget(QLabel("Frame Width:"))
+
+        size_layout.addWidget(QLabel("Width:"))
         self.width_spin = QSpinBox()
         self.width_spin.setRange(8, self.image.width())
         self.width_spin.setValue(self.frame_size.w)
         self.width_spin.setSingleStep(8)
-        self.width_spin.valueChanged.connect(self.update_frame_size)
+        self.width_spin.valueChanged.connect(self.update_size)
         size_layout.addWidget(self.width_spin)
 
-        size_layout.addWidget(QLabel("Frame Height:"))
+        size_layout.addWidget(QLabel("Height:"))
         self.height_spin = QSpinBox()
         self.height_spin.setRange(8, self.image.height())
         self.height_spin.setValue(self.frame_size.h)
         self.height_spin.setSingleStep(8)
-        self.height_spin.valueChanged.connect(self.update_frame_size)
+        self.height_spin.valueChanged.connect(self.update_size)
         size_layout.addWidget(self.height_spin)
-        right_layout.addLayout(size_layout)
+
+        frame_size_group.setLayout(size_layout)
+        right_layout.addWidget(frame_size_group)
 
         # Offset input
-        size_layout = QHBoxLayout()
-        size_layout.addWidget(QLabel("Offset X:"))
+        offset_group = QGroupBox("Offset")
+        offset_layout = QHBoxLayout()
+
+        offset_layout.addWidget(QLabel("X:"))
         self.offset_x_spin = QSpinBox()
         self.offset_x_spin.setRange(0, self.image.width())
         self.offset_x_spin.setValue(self.offset.x)
-        self.offset_x_spin.valueChanged.connect(self.update_frame_size)
-        size_layout.addWidget(self.offset_x_spin)
+        self.offset_x_spin.valueChanged.connect(self.update_size)
+        offset_layout.addWidget(self.offset_x_spin)
 
-        size_layout.addWidget(QLabel("Offset Y:"))
+        offset_layout.addWidget(QLabel("Y:"))
         self.offset_y_spin = QSpinBox()
         self.offset_y_spin.setRange(0, self.image.height())
         self.offset_y_spin.setValue(self.offset.y)
-        self.offset_y_spin.valueChanged.connect(self.update_frame_size)
-        size_layout.addWidget(self.offset_y_spin)
-        right_layout.addLayout(size_layout)
+        self.offset_y_spin.valueChanged.connect(self.update_size)
+        offset_layout.addWidget(self.offset_y_spin)
+
+        offset_group.setLayout(offset_layout)
+        right_layout.addWidget(offset_group)
+
+        # Spacing input
+        spacing_group = QGroupBox("Spacing")
+        spacing_layout = QHBoxLayout()
+
+        spacing_layout.addWidget(QLabel("X:"))
+        self.spacing_x_spin = QSpinBox()
+        self.spacing_x_spin.setRange(0, self.image.width())
+        self.spacing_x_spin.setValue(self.spacing.x)
+        self.spacing_x_spin.valueChanged.connect(self.update_size)
+        spacing_layout.addWidget(self.spacing_x_spin)
+
+        spacing_layout.addWidget(QLabel("Y:"))
+        self.spacing_y_spin = QSpinBox()
+        self.spacing_y_spin.setRange(0, self.image.height())
+        self.spacing_y_spin.setValue(self.spacing.y)
+        self.spacing_y_spin.valueChanged.connect(self.update_size)
+        spacing_layout.addWidget(self.spacing_y_spin)
+
+        spacing_group.setLayout(spacing_layout)
+        right_layout.addWidget(spacing_group)
 
         # Base name input
+        right_layout.addStretch()
         name_layout = QHBoxLayout()
         name_layout.addWidget(QLabel("Base Name:"))
         self.base_name = QLineEdit("sprite")
         self.base_name.setValidator(QRegExpValidator(QRegExp("[a-zA-Z0-9_()]*")))
         name_layout.addWidget(self.base_name)
         right_layout.addLayout(name_layout)
+        right_layout.addStretch()
 
         # Buttons
         button_layout = QHBoxLayout()
@@ -132,9 +168,10 @@ class SpriteSheetDialog(QDialog):
         self.image = Image.remove_background(self.image, color)
         self.update_display()
 
-    def update_frame_size(self):
+    def update_size(self):
         self.frame_size = Size(self.width_spin.value(), self.height_spin.value())
         self.offset = Point(self.offset_x_spin.value(), self.offset_y_spin.value())
+        self.spacing = Point(self.spacing_x_spin.value(), self.spacing_y_spin.value())
         self.update_display()
 
     def update_display(self):
@@ -145,6 +182,8 @@ class SpriteSheetDialog(QDialog):
             self.frame_size.h,
             self.offset.x,
             self.offset.y,
+            self.spacing.x,
+            self.spacing.y,
         )
 
         result = Image.flatten([self.checker, pixmap, grid], pixmap.size())
