@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import (
     QMessageBox,
     QPushButton,
     QScrollArea,
+    QSlider,
     QSpinBox,
     QVBoxLayout,
 )
@@ -39,27 +40,42 @@ class SpriteSheetDialog(QDialog):
         self.update_display()
 
     def setup_ui(self):
-        self.setWindowTitle("Sprite Sheet Extract")
-        self.setWindowModality(Qt.WindowModality.ApplicationModal)
+        self.setWindowTitle("Extract Sprites")
 
         main_layout = QHBoxLayout()
         right_layout = QVBoxLayout()
         left_layout = QVBoxLayout()
 
+        control_layout = QHBoxLayout()
+
+        # Zoom level
+        control_layout.addWidget(QLabel("Zoom:"))
+        self.zoom_slider = QSlider(Qt.Horizontal)
+        self.zoom_slider.setMinimum(10)
+        self.zoom_slider.setMaximum(50)
+        self.zoom_slider.setValue(10)
+        self.zoom_slider.valueChanged.connect(self.update_zoom)
+        control_layout.addWidget(self.zoom_slider)
+        control_layout.addStretch()
+
         # Alpha channel
-        alpha_layout = QHBoxLayout()
-        alpha_layout.addWidget(QLabel("Alpha:"))
+        control_layout.addWidget(QLabel("Alpha:"))
         self.alpha_btn = ColorPickerButton(self)
         self.alpha_btn.setToolTip("Pick background color as transparent")
-        alpha_layout.addWidget(self.alpha_btn)
-        alpha_layout.addStretch()
-        left_layout.addLayout(alpha_layout)
+        control_layout.addWidget(self.alpha_btn)
+
+        control_layout.addStretch()
+        left_layout.addLayout(control_layout)
 
         # Sprite sheet display
         self.scroll_area = QScrollArea()
         self.scroll_area.setMouseTracking(True)
+        self.scroll_area.setWidgetResizable(True)
         self.display = MagnifiyingCanvasLabel(self.scroll_area)
         self.display.clicked.connect(self.pick_alpha_color)
+        self.display.zoomChanged.connect(
+            lambda x: self.zoom_slider.setValue(int(x * 10))
+        )
         self.scroll_area.setWidget(self.display)
         left_layout.addWidget(self.scroll_area)
 
@@ -156,6 +172,10 @@ class SpriteSheetDialog(QDialog):
         main_layout.addLayout(right_layout)
         self.setLayout(main_layout)
 
+    def update_zoom(self, value: int):
+        zoom = value / 10.0
+        self.display.set_zoom(zoom)
+
     def pick_alpha(self):
         self.display.toggle_click()
 
@@ -187,7 +207,7 @@ class SpriteSheetDialog(QDialog):
         )
 
         result = Image.flatten([self.checker, pixmap, grid], pixmap.size())
-        self.display.setFixedSize(result.size())
+        # self.display.setFixedSize(result.size())
         self.display.setPixmap(result)
 
     def validate_extract(self):

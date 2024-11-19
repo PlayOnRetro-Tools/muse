@@ -3,7 +3,7 @@ from typing import List
 
 import sip
 from PyQt5.QtCore import QPoint, QRectF, QSize, Qt
-from PyQt5.QtGui import QColor, QImage, QPainter, QPainterPath, QPixmap
+from PyQt5.QtGui import QColor, QImage, QPainter, QPainterPath, QPen, QPixmap
 from PyQt5.QtWidgets import QGraphicsItem, QGraphicsPixmapItem, QGraphicsScene
 
 
@@ -53,7 +53,9 @@ class Image:
         grid_pixmap = QPixmap(size)
         grid_pixmap.fill(Qt.transparent)
         painter = QPainter(grid_pixmap)
-        painter.setPen(QColor(255, 255, 255, 100))
+        pen = QPen(QColor(220, 220, 220), 1)
+        pen.setCosmetic(True)
+        painter.setPen(pen)
 
         # Compute number of rows and cols
         img_width = size.width() - offset_x
