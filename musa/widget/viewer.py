@@ -6,14 +6,15 @@ from PyQt5.QtWidgets import QLabel, QWidget
 class Magnifier(QWidget):
     """Magnifiying lens"""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, zoom_factor: int = 8, radius: int = 64):
         super().__init__(parent)
-        self.source_pixmap = None
-        self.magnified_pos = QPoint()
-        self.zoom_factor = 12
-        self.size = 128
 
-        self.setFixedSize(self.size, self.size)
+        self.lens_size = radius * 2
+        self.magnified_pos = QPoint()
+        self.zoom_factor = zoom_factor
+        self.source_pixmap: QPixmap = None
+
+        self.setFixedSize(self.lens_size, self.lens_size)
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Tool | Qt.WindowStaysOnTopHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
 
@@ -33,32 +34,43 @@ class Magnifier(QWidget):
 
         # Create clipping path
         path = QPainterPath()
-        path.addEllipse(0, 0, self.size, self.size)
+        path.addEllipse(0, 0, self.lens_size, self.lens_size)
         painter.setClipPath(path)
 
         # compute area to magnify
-        size = self.size / self.zoom_factor
-        x = self.magnified_pos.x() - size / 2
-        y = self.magnified_pos.y() - size / 2
+        size = self.lens_size / self.zoom_factor
+
+        # Rectangle at x,y with center at mouse coords
+        x = int(self.magnified_pos.x() - size / 2)
+        y = int(self.magnified_pos.y() - size / 2)
 
         # Extract and scale the source area
         source_rect = self.source_pixmap.rect()
-        x = max(0, min(x, source_rect.width() - size))
-        y = max(0, min(y, source_rect.height() - size))
 
-        area = self.source_pixmap.copy(int(x), int(y), int(size), int(size))
+        # Adjust the size of the copy if we are at the edges
+
+        # x = max(0, min(x, source_rect.width() - size))
+        # y = max(0, min(y, source_rect.height() - size))
+
+        area = self.source_pixmap.copy(x, y, int(size), int(size))
         scaled = area.scaled(
-            self.size, self.size, Qt.KeepAspectRatio, Qt.FastTransformation
+            self.lens_size, self.lens_size, Qt.KeepAspectRatio, Qt.FastTransformation
         )
 
-        # Draw the magnified image
-        painter.drawPixmap(0, 0, scaled)
+        # Compose the final image accounting for source image edges
+        result = QPixmap(self.lens_size, self.lens_size)
+        result.fill(Qt.black)
+        pix = QPainter(result)
+        pix.drawPixmap(0, 0, scaled)
+        pix.end()
+
+        painter.drawPixmap(0, 0, result)
 
         # Draw Crosshair
-        pen = QPen(QColor(255, 255, 255), 1.5)
+        pen = QPen(QColor(255, 255, 255), 1)
         pen.setCosmetic(True)
         painter.setPen(pen)
-        center = self.size // 2
+        center = self.lens_size // 2
 
         # Horizontal
         painter.drawLine(center - 10, center, center + 10, center)
@@ -72,8 +84,8 @@ class Magnifier(QWidget):
         metrics = painter.fontMetrics()
         text_width = metrics.width(text)
         text_height = metrics.height()
-        text_x = (self.size - text_width) // 2
-        text_y = self.size - 20
+        text_x = (self.lens_size - text_width) // 2
+        text_y = self.lens_size - 20
 
         # Text background
         painter.fillRect(
@@ -90,25 +102,26 @@ class Magnifier(QWidget):
 
         # Draw border
         painter.setPen(QPen(QColor(0, 0, 0, 127), 1.5))
-        painter.drawEllipse(0, 0, self.size - 1, self.size - 1)
+        painter.drawEllipse(0, 0, self.lens_size - 1, self.lens_size - 1)
 
 
-class MagnifiyingCanvasLabel(QLabel):
+class ImageViewer(QLabel):
     clicked = pyqtSignal(object)
     zoomChanged = pyqtSignal(float)
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.setAlignment(Qt.AlignCenter)
         self.can_click = False
 
         # Zoom parameters
-        self.current_zoom = 1.0
+        self.zoom_factor = 1.0
         self.min_zoom = 1.0
-        self.max_zoom = 5.0
+        self.max_zoom = 8.0
         self.zoom_step = 0.1
 
         # Original pixmap
-        self.original_pixmap = None
+        self.original_pixmap: QPixmap = None
 
         # Magnifier setup
         self.magnifier = Magnifier(self)
@@ -116,11 +129,6 @@ class MagnifiyingCanvasLabel(QLabel):
 
         # Hover and zoom tracking
         self.setMouseTracking(True)
-
-        # Tracking pan
-        self.pan_start = QPoint()
-        self.current_pan = QPoint()
-        self.is_panning = False
 
     def toggle_click(self):
         self.can_click = not self.can_click
@@ -130,60 +138,43 @@ class MagnifiyingCanvasLabel(QLabel):
             self.setCursor(Qt.ArrowCursor)
 
     def setPixmap(self, pixmap: QPixmap):
-        """Set the original pixmap and initialize zoom"""
+        """Set the original pixmap"""
         self.original_pixmap = pixmap
-        self.current_pan = QPoint()
         self._update_displayed_pixmap()
 
         if self.magnifier:
             self.magnifier.set_source_pixmap(pixmap)
+
+    def set_zoom(self, zoom_level: float):
+        self.zoom_factor = max(self.min_zoom, min(self.max_zoom, zoom_level))
+        self._update_displayed_pixmap()
 
     def _update_displayed_pixmap(self):
         """Apply zoom and update pixmap"""
         if not self.original_pixmap:
             return
 
-        # Create transform pixmap
+        # Scale the pixmap
         transform = QTransform()
-        transform.scale(self.current_zoom, self.current_zoom)
+        transform.scale(self.zoom_factor, self.zoom_factor)
 
-        # Apply zoom and pan
+        # Apply zoom
         zoomed_pixmap = self.original_pixmap.transformed(transform)
         super().setPixmap(zoomed_pixmap)
 
-        self.zoomChanged.emit(self.current_zoom)
-
-    def set_zoom(self, zoom_level: float):
-        self.current_zoom = max(self.min_zoom, min(self.max_zoom, zoom_level))
-        self._update_displayed_pixmap()
-
-    def wheelEvent(self, event):
-        # Zoom with Ctrl Key
-        if event.modifiers() & Qt.ControlModifier:
-            # Zoom direction
-            zoom_delta = (
-                self.zoom_step if event.angleDelta().y() > 0 else -self.zoom_step
-            )
-
-            # Calculate new zoom
-            new_zoom = self.current_zoom + zoom_delta
-            new_zoom = max(self.min_zoom, min(self.max_zoom, new_zoom))
-
-            # Update zoom
-            self.current_zoom = new_zoom
-            self._update_displayed_pixmap()
+        self.zoomChanged.emit(self.zoom_factor)
 
     def mousePressEvent(self, event):
         if self.can_click and event.button() == Qt.LeftButton:
-            # Emit click position in original image coordinates
             original_pos = self._map_to_original_coords(event.pos())
 
-            self.clicked.emit(original_pos)
-            self.magnifier.hide()
+            if original_pos:
+                self.clicked.emit(original_pos)
+                self.magnifier.hide()
+
         elif event.button() == Qt.RightButton:
             self.magnifier.hide()
             self.toggle_click()
-
         super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event):
@@ -204,56 +195,34 @@ class MagnifiyingCanvasLabel(QLabel):
     def leaveEvent(self, event):
         self.magnifier.hide()
 
-    def _map_to_original_coords(self, pos):
-        """Convert widget coordinates to original image coordinates"""
+    def _map_to_original_coords(self, pos) -> QPoint:
+        """Map mouse widget coordinates to original image coordinates"""
+
         if not self.original_pixmap:
             return None
 
-        img_width = self.original_pixmap.width() * self.current_zoom
-        img_height = self.original_pixmap.height() * self.current_zoom
+        pixmap_pos = pos - self._get_pixmap_offset()
+
+        # Account for scaling
+        point = QPoint(
+            int(pixmap_pos.x() / self.zoom_factor),
+            int(pixmap_pos.y() / self.zoom_factor),
+        )
 
         # Point within image bounds?
-        if pos.x() < 0 or pos.x() > img_width or pos.y() < 0 or pos.y() > img_height:
-            return None
+        if self.original_pixmap.rect().contains(point):
+            return point
+        return None
 
-        original_x = int(pos.x() / self.current_zoom)
-        original_y = int(pos.y() / self.current_zoom)
+    def _get_pixmap_offset(self) -> QPoint:
+        if not self.pixmap():
+            return QPoint(0, 0)
 
-        return QPoint(original_x, original_y)
+        # Get the scaled size
+        scaled_size = self.pixmap().size()
 
-    def _get_scaled_position(self, pos):
-        if not self.can_click:
-            return None
-
-        img_rect = self._get_scaled_rect()
-
-        if not img_rect.contains(pos):
-            return None
-
-        x_ratio = (pos.x() - img_rect.left()) / img_rect.width()
-        y_ratio = (pos.y() - img_rect.top()) / img_rect.height()
-
-        original_x = int(x_ratio * self.pixmap().width())
-        original_y = int(y_ratio * self.pixmap().height())
-
-        return QPoint(original_x, original_y)
-
-    def _get_scaled_rect(self):
-        if not self.can_click:
-            return None
-
-        img_ratio = self.pixmap().width() / self.pixmap().height()
-        label_ratio = self.width() / self.height()
-
-        if img_ratio > label_ratio:
-            w = self.width()
-            h = int(w / img_ratio)
-            x = 0
-            y = (self.height() - w) // 2
-        else:
-            h = self.height()
-            w = int(h * img_ratio)
-            x = (self.width() - w) // 2
-            y = 0
-
-        return self.rect().adjusted(x, y, -x, -y)
+        # Offset to center
+        return QPoint(
+            (self.width() - scaled_size.width()) // 2,
+            (self.height() - scaled_size.height()) // 2,
+        )

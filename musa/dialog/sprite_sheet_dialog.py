@@ -19,17 +19,19 @@ from PyQt5.QtWidgets import (
 
 from musa.model.types import Point, Size
 from musa.util.image import Image
-from musa.widget import ColorPickerButton, MagnifiyingCanvasLabel
+from musa.widget.button import AlphaColorPickerButton
+from musa.widget.viewer import ImageViewer
 
 
 class SpriteSheetDialog(QDialog):
     def __init__(self, image_path: Path, parent=None):
         super().__init__(parent)
+        self.setMinimumSize(600, 480)
         self.image_path = image_path
         self.image = QImage(image_path.resolve().as_posix())
 
         # Cache checker board image
-        self.checker = Image.checker_board(self.image.size())
+        self.checker = Image.checker_board(self.image.size(), 8)
 
         self.frame_size = Size(32, 32)  # Default size
         self.offset = Point(0, 0)
@@ -47,6 +49,7 @@ class SpriteSheetDialog(QDialog):
         left_layout = QVBoxLayout()
 
         control_layout = QHBoxLayout()
+        control_layout.addStretch()
 
         # Zoom level
         control_layout.addWidget(QLabel("Zoom:"))
@@ -60,7 +63,7 @@ class SpriteSheetDialog(QDialog):
 
         # Alpha channel
         control_layout.addWidget(QLabel("Alpha:"))
-        self.alpha_btn = ColorPickerButton(self)
+        self.alpha_btn = AlphaColorPickerButton(self)
         self.alpha_btn.setToolTip("Pick background color as transparent")
         control_layout.addWidget(self.alpha_btn)
 
@@ -71,7 +74,7 @@ class SpriteSheetDialog(QDialog):
         self.scroll_area = QScrollArea()
         self.scroll_area.setMouseTracking(True)
         self.scroll_area.setWidgetResizable(True)
-        self.display = MagnifiyingCanvasLabel(self.scroll_area)
+        self.display = ImageViewer(self.scroll_area)
         self.display.clicked.connect(self.pick_alpha_color)
         self.display.zoomChanged.connect(
             lambda x: self.zoom_slider.setValue(int(x * 10))
@@ -207,7 +210,6 @@ class SpriteSheetDialog(QDialog):
         )
 
         result = Image.flatten([self.checker, pixmap, grid], pixmap.size())
-        # self.display.setFixedSize(result.size())
         self.display.setPixmap(result)
 
     def validate_extract(self):
@@ -222,7 +224,7 @@ class SpriteSheetDialog(QDialog):
             )
             return
 
-        self.sprites = self.get_sprites()
+        self.accept()
 
     def get_sprites(self) -> List[QPixmap]:
         return Image.extract_sprites(

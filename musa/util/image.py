@@ -1,9 +1,8 @@
 import random
 from typing import List
 
-import sip
 from PyQt5.QtCore import QPoint, QRectF, QSize, Qt
-from PyQt5.QtGui import QColor, QImage, QPainter, QPainterPath, QPen, QPixmap
+from PyQt5.QtGui import QColor, QImage, QPainter, QPainterPath, QPen, QPixmap, qAlpha
 from PyQt5.QtWidgets import QGraphicsItem, QGraphicsPixmapItem, QGraphicsScene
 
 
@@ -53,7 +52,7 @@ class Image:
         grid_pixmap = QPixmap(size)
         grid_pixmap.fill(Qt.transparent)
         painter = QPainter(grid_pixmap)
-        pen = QPen(QColor(220, 220, 220), 1)
+        pen = QPen(QColor(220, 220, 220), 1, Qt.DashLine)
         pen.setCosmetic(True)
         painter.setPen(pen)
 
@@ -86,18 +85,9 @@ class Image:
 
     @staticmethod
     def is_transparent(image: QImage) -> bool:
-        if image.format() != QImage.Format_ARGB32:
-            image.convertToFormat(QImage.Format_ARGB32)
-
-        bytes_per_line = image.bytesPerLine()
-
         for y in range(image.height()):
-            ptr = image.scanLine(y)
-            buffer = sip.voidptr(ptr, bytes_per_line)
-            line_bytes = bytes(buffer)
-            # Check alpha channel (every 4th byte)
-            for alpha in line_bytes[3:4]:
-                if alpha > 0:
+            for x in range(image.width()):
+                if qAlpha(image.pixel(x, y)) != 0:
                     return False
         return True
 
