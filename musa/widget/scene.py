@@ -126,8 +126,8 @@ class EditorView(QGraphicsView):
         self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
         self.setCacheMode(QGraphicsView.CacheBackground)
         self.setFrameStyle(QFrame.NoFrame)
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.setDragMode(QGraphicsView.RubberBandDrag)
 
         self.grid = EditorGrid(self)

@@ -5,13 +5,13 @@ from PyQt5.QtCore import QPoint, QRegExp, Qt
 from PyQt5.QtGui import QImage, QPixmap, QRegExpValidator
 from PyQt5.QtWidgets import (
     QDialog,
+    QFormLayout,
     QGroupBox,
     QHBoxLayout,
     QLabel,
     QLineEdit,
     QMessageBox,
     QPushButton,
-    QScrollArea,
     QSlider,
     QSpinBox,
     QVBoxLayout,
@@ -20,7 +20,7 @@ from PyQt5.QtWidgets import (
 from musa.model.types import Point, Size
 from musa.util.image import Image
 from musa.widget.button import AlphaColorPickerButton
-from musa.widget.viewer import ImageViewer
+from musa.widget.viewer import ScrollImageViewer
 
 
 class SpriteSheetDialog(QDialog):
@@ -71,92 +71,77 @@ class SpriteSheetDialog(QDialog):
         control_layout.addStretch()
         left_layout.addLayout(control_layout)
 
-        # Sprite sheet display
-        self.scroll_area = QScrollArea()
-        self.scroll_area.setMouseTracking(True)
-        self.scroll_area.setWidgetResizable(True)
-        self.scroll_area.setAlignment(Qt.AlignCenter)
-        self.scroll_area.setStyleSheet(
-            """QScrollArea { background-color: rgba(96, 96, 96, 1); }"""
-        )
-        self.display = ImageViewer(self.scroll_area)
-        self.display.clicked.connect(self.pick_alpha_color)
-        self.display.zoomChanged.connect(
+        self.img_viewer = ScrollImageViewer(self)
+        self.img_viewer.clicked.connect(self.pick_alpha_color)
+        self.img_viewer.zoomChanged.connect(
             lambda x: self.zoom_slider.setValue(int(x * 10))
         )
-        self.scroll_area.setWidget(self.display)
-        left_layout.addWidget(self.scroll_area)
+        left_layout.addWidget(self.img_viewer)
 
         # Connect signals
         self.alpha_btn.clicked.connect(lambda clicked: self.pick_alpha())
 
         # Frame size input
-        frame_size_group = QGroupBox("Frame Size")
-        size_layout = QHBoxLayout()
+        frame_size_group = QGroupBox("Size")
+        size_layout = QFormLayout()
 
-        size_layout.addWidget(QLabel("Width:"))
         self.width_spin = QSpinBox()
         self.width_spin.setRange(8, self.image.width())
         self.width_spin.setValue(self.frame_size.w)
         self.width_spin.setSingleStep(8)
         self.width_spin.valueChanged.connect(self.update_size)
-        size_layout.addWidget(self.width_spin)
+        size_layout.addRow("Width:", self.width_spin)
 
-        size_layout.addWidget(QLabel("Height:"))
         self.height_spin = QSpinBox()
         self.height_spin.setRange(8, self.image.height())
         self.height_spin.setValue(self.frame_size.h)
         self.height_spin.setSingleStep(8)
         self.height_spin.valueChanged.connect(self.update_size)
-        size_layout.addWidget(self.height_spin)
+        size_layout.addRow("Height:", self.height_spin)
 
         frame_size_group.setLayout(size_layout)
         right_layout.addWidget(frame_size_group)
 
         # Offset input
         offset_group = QGroupBox("Offset")
-        offset_layout = QHBoxLayout()
+        offset_layout = QFormLayout()
 
-        offset_layout.addWidget(QLabel("X:"))
         self.offset_x_spin = QSpinBox()
         self.offset_x_spin.setRange(0, self.image.width())
         self.offset_x_spin.setValue(self.offset.x)
         self.offset_x_spin.valueChanged.connect(self.update_size)
-        offset_layout.addWidget(self.offset_x_spin)
+        offset_layout.addRow("X:", self.offset_x_spin)
 
-        offset_layout.addWidget(QLabel("Y:"))
         self.offset_y_spin = QSpinBox()
         self.offset_y_spin.setRange(0, self.image.height())
         self.offset_y_spin.setValue(self.offset.y)
         self.offset_y_spin.valueChanged.connect(self.update_size)
-        offset_layout.addWidget(self.offset_y_spin)
+        offset_layout.addRow("Y:", self.offset_y_spin)
 
         offset_group.setLayout(offset_layout)
         right_layout.addWidget(offset_group)
 
         # Spacing input
         spacing_group = QGroupBox("Spacing")
-        spacing_layout = QHBoxLayout()
+        spacing_layout = QFormLayout()
 
-        spacing_layout.addWidget(QLabel("X:"))
         self.spacing_x_spin = QSpinBox()
         self.spacing_x_spin.setRange(0, self.image.width())
         self.spacing_x_spin.setValue(self.spacing.x)
         self.spacing_x_spin.valueChanged.connect(self.update_size)
-        spacing_layout.addWidget(self.spacing_x_spin)
+        spacing_layout.addRow("X:", self.spacing_x_spin)
 
-        spacing_layout.addWidget(QLabel("Y:"))
         self.spacing_y_spin = QSpinBox()
         self.spacing_y_spin.setRange(0, self.image.height())
         self.spacing_y_spin.setValue(self.spacing.y)
         self.spacing_y_spin.valueChanged.connect(self.update_size)
-        spacing_layout.addWidget(self.spacing_y_spin)
+        spacing_layout.addRow("Y:", self.spacing_y_spin)
 
         spacing_group.setLayout(spacing_layout)
         right_layout.addWidget(spacing_group)
 
         # Base name input
-        name_group = QGroupBox("Base Name:")
+        name_group = QGroupBox("Name")
         name_layout = QHBoxLayout()
 
         self.base_name = QLineEdit("sprite")
@@ -178,19 +163,19 @@ class SpriteSheetDialog(QDialog):
         button_layout.addWidget(cancel_btn)
         right_layout.addLayout(button_layout)
 
-        main_layout.addLayout(left_layout)
-        main_layout.addLayout(right_layout)
+        main_layout.addLayout(left_layout, stretch=3)
+        main_layout.addLayout(right_layout, stretch=1)
         self.setLayout(main_layout)
 
     def update_zoom(self, value: int):
         zoom = value / 10.0
-        self.display.set_zoom(zoom)
+        self.img_viewer.set_zoom(zoom)
 
     def pick_alpha(self):
-        self.display.toggle_click()
+        self.img_viewer.toggle_click()
 
     def pick_alpha_color(self, pos: QPoint):
-        self.display.toggle_click()
+        self.img_viewer.toggle_click()
         color = self.image.pixelColor(pos.x(), pos.y())
         self.alpha_btn.set_color(color)
 
@@ -217,7 +202,7 @@ class SpriteSheetDialog(QDialog):
         )
 
         result = Image.flatten([self.checker, pixmap, grid], pixmap.size())
-        self.display.setPixmap(result)
+        self.img_viewer.setPixmap(result)
 
     def validate_extract(self):
         width = self.width_spin.value()

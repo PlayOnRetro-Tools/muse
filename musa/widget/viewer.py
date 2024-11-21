@@ -1,6 +1,6 @@
 from PyQt5.QtCore import QPoint, QPointF, QRect, Qt, pyqtSignal
 from PyQt5.QtGui import QColor, QFont, QPainter, QPainterPath, QPen, QPixmap, QTransform
-from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QLabel, QWidget
+from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QLabel, QScrollArea, QWidget
 
 
 class Magnifier(QWidget):
@@ -147,7 +147,7 @@ class ImageViewer(QLabel):
         # Zoom parameters
         self.zoom_factor = 1.0
         self.min_zoom = 1.0
-        self.max_zoom = 10
+        self.max_zoom = 12
         self.zoom_step = 0.1
 
         # Original pixmap
@@ -265,3 +265,29 @@ class ImageViewer(QLabel):
             (self.width() - scaled_size.width()) // 2,
             (self.height() - scaled_size.height()) // 2,
         )
+
+
+class ScrollImageViewer(QScrollArea):
+    clicked = pyqtSignal(object)
+    zoomChanged = pyqtSignal(float)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self.image_viewer = ImageViewer(self)
+        self.setWidget(self.image_viewer)
+        self.setWidgetResizable(True)
+        self.setAlignment(Qt.AlignCenter)
+        self.setStyleSheet("background-color: rgba(80, 80, 80, 255);")
+
+        self.image_viewer.clicked.connect(self.clicked)
+        self.image_viewer.zoomChanged.connect(self.zoomChanged)
+
+    def set_zoom(self, zoom_factor: float):
+        self.image_viewer.set_zoom(zoom_factor)
+
+    def setPixmap(self, pixmap: QPixmap):
+        self.image_viewer.setPixmap(pixmap)
+
+    def toggle_click(self):
+        self.image_viewer.toggle_click()
