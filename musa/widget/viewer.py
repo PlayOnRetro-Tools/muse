@@ -1,6 +1,6 @@
-from PyQt5.QtCore import QPoint, Qt, pyqtSignal
+from PyQt5.QtCore import QPoint, QPointF, QRect, Qt, pyqtSignal
 from PyQt5.QtGui import QColor, QFont, QPainter, QPainterPath, QPen, QPixmap, QTransform
-from PyQt5.QtWidgets import QLabel, QWidget
+from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QLabel, QWidget
 
 
 class Magnifier(QWidget):
@@ -12,6 +12,8 @@ class Magnifier(QWidget):
         self.lens_size = radius * 2
         self.magnified_pos = QPoint()
         self.zoom_factor = zoom_factor
+        self.lens_rect_size = int(self.lens_size / self.zoom_factor)
+
         self.source_pixmap: QPixmap = None
 
         self.setFixedSize(self.lens_size, self.lens_size)
@@ -37,45 +39,73 @@ class Magnifier(QWidget):
         path.addEllipse(0, 0, self.lens_size, self.lens_size)
         painter.setClipPath(path)
 
-        # compute area to magnify
-        size = self.lens_size / self.zoom_factor
+        # Source Rectangle top-left x,y with center at mouse coords
+        src_x = self.magnified_pos.x() - self.lens_rect_size // 2
+        src_y = self.magnified_pos.y() - self.lens_rect_size // 2
+        src_rect = QRect(src_x, src_y, self.lens_rect_size, self.lens_rect_size)
 
-        # Rectangle at x,y with center at mouse coords
-        x = int(self.magnified_pos.x() - size / 2)
-        y = int(self.magnified_pos.y() - size / 2)
+        # Validate rectangle
+        pixmap_rect = self.source_pixmap.rect()
+        valid_src_rect = src_rect.intersected(pixmap_rect)
 
-        # Extract and scale the source area
-        source_rect = self.source_pixmap.rect()
+        # Offset from original source rectangle
+        x_offset = valid_src_rect.x() - src_rect.x()
+        y_offset = valid_src_rect.y() - src_rect.y()
 
-        # Adjust the size of the copy if we are at the edges
+        # Scale the offset by zoom factor to get the lens offset
+        lens_x_offset = int(x_offset * self.zoom_factor)
+        lens_y_offset = int(y_offset * self.zoom_factor)
 
-        # x = max(0, min(x, source_rect.width() - size))
-        # y = max(0, min(y, source_rect.height() - size))
+        # Get the src rect magnified size
+        src_width = int(valid_src_rect.width() * self.zoom_factor)
+        src_height = int(valid_src_rect.height() * self.zoom_factor)
 
-        area = self.source_pixmap.copy(x, y, int(size), int(size))
-        scaled = area.scaled(
+        # Destination rectangle in the lens widget at the correct offset and size
+        dst_rect = QRect(lens_x_offset, lens_y_offset, src_width, src_height)
+
+        # Copy and scale the valid portion of the source pixmap
+        valid_src_rect
+        area = self.source_pixmap.copy(valid_src_rect).scaled(
             self.lens_size, self.lens_size, Qt.KeepAspectRatio, Qt.FastTransformation
         )
 
-        # Compose the final image accounting for source image edges
+        # Compose the final image
         result = QPixmap(self.lens_size, self.lens_size)
         result.fill(Qt.black)
         pix = QPainter(result)
-        pix.drawPixmap(0, 0, scaled)
+        pix.drawPixmap(dst_rect, area)
         pix.end()
 
         painter.drawPixmap(0, 0, result)
 
         # Draw Crosshair
-        pen = QPen(QColor(255, 255, 255), 1)
-        pen.setCosmetic(True)
-        painter.setPen(pen)
         center = self.lens_size // 2
 
+        pen = QPen(Qt.black, 3)
+        pen.setCosmetic(True)
+        painter.setPen(pen)
+
         # Horizontal
-        painter.drawLine(center - 10, center, center + 10, center)
+        painter.drawLine(
+            QPointF(center - 10, center + 0.5), QPointF(center + 10, center + 0.5)
+        )
         # Vertical
-        painter.drawLine(center, center - 10, center, center + 10)
+        painter.drawLine(
+            QPointF(center + 0.5, center - 10), QPointF(center + 0.5, center + 10)
+        )
+
+        pen = QPen(Qt.white, 1)
+        pen.setCosmetic(True)
+        painter.setPen(pen)
+
+        # Horizontal
+        painter.drawLine(
+            QPointF(center - 10, center + 0.5), QPointF(center + 10, center + 0.5)
+        )
+        # Vertical
+        painter.drawLine(
+            QPointF(center + 0.5, center - 10), QPointF(center + 0.5, center + 10)
+        )
 
         # Draw coordinates
         painter.setFont(QFont("Arial", 8))
@@ -97,12 +127,12 @@ class Magnifier(QWidget):
         )
 
         # Draw text
-        painter.setPen(QColor(255, 255, 255))
+        painter.setPen(Qt.white)
         painter.drawText(text_x, text_y, text)
 
         # Draw border
-        painter.setPen(QPen(QColor(0, 0, 0, 127), 1.5))
-        painter.drawEllipse(0, 0, self.lens_size - 1, self.lens_size - 1)
+        painter.setPen(QPen(Qt.black, 2))
+        painter.drawEllipse(0, 0, self.lens_size, self.lens_size)
 
 
 class ImageViewer(QLabel):
@@ -117,7 +147,7 @@ class ImageViewer(QLabel):
         # Zoom parameters
         self.zoom_factor = 1.0
         self.min_zoom = 1.0
-        self.max_zoom = 8.0
+        self.max_zoom = 10
         self.zoom_step = 0.1
 
         # Original pixmap
@@ -129,6 +159,14 @@ class ImageViewer(QLabel):
 
         # Hover and zoom tracking
         self.setMouseTracking(True)
+
+        # Shadow fx
+        self.shadow = QGraphicsDropShadowEffect(self)
+        self.shadow.setBlurRadius(20)
+        self.shadow.setColor(QColor(0, 0, 0, 128))
+        self.shadow.setOffset(8, 8)
+        self.setGraphicsEffect(self.shadow)
+        self.shadow.setEnabled(True)
 
     def toggle_click(self):
         self.can_click = not self.can_click
@@ -161,6 +199,7 @@ class ImageViewer(QLabel):
         # Apply zoom
         zoomed_pixmap = self.original_pixmap.transformed(transform)
         super().setPixmap(zoomed_pixmap)
+        self.setFixedSize(zoomed_pixmap.size())
 
         self.zoomChanged.emit(self.zoom_factor)
 

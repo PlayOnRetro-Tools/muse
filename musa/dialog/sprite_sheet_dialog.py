@@ -26,7 +26,7 @@ from musa.widget.viewer import ImageViewer
 class SpriteSheetDialog(QDialog):
     def __init__(self, image_path: Path, parent=None):
         super().__init__(parent)
-        self.setMinimumSize(600, 480)
+        self.setMinimumSize(800, 600)
         self.image_path = image_path
         self.image = QImage(image_path.resolve().as_posix())
 
@@ -54,6 +54,7 @@ class SpriteSheetDialog(QDialog):
         # Zoom level
         control_layout.addWidget(QLabel("Zoom:"))
         self.zoom_slider = QSlider(Qt.Horizontal)
+        self.zoom_slider.setMinimumWidth(200)
         self.zoom_slider.setMinimum(10)
         self.zoom_slider.setMaximum(50)
         self.zoom_slider.setValue(10)
@@ -74,6 +75,10 @@ class SpriteSheetDialog(QDialog):
         self.scroll_area = QScrollArea()
         self.scroll_area.setMouseTracking(True)
         self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setAlignment(Qt.AlignCenter)
+        self.scroll_area.setStyleSheet(
+            """QScrollArea { background-color: rgba(96, 96, 96, 1); }"""
+        )
         self.display = ImageViewer(self.scroll_area)
         self.display.clicked.connect(self.pick_alpha_color)
         self.display.zoomChanged.connect(
@@ -151,17 +156,19 @@ class SpriteSheetDialog(QDialog):
         right_layout.addWidget(spacing_group)
 
         # Base name input
-        right_layout.addStretch()
+        name_group = QGroupBox("Base Name:")
         name_layout = QHBoxLayout()
-        name_layout.addWidget(QLabel("Base Name:"))
+
         self.base_name = QLineEdit("sprite")
         self.base_name.setValidator(QRegExpValidator(QRegExp("[a-zA-Z0-9_()]*")))
         name_layout.addWidget(self.base_name)
-        right_layout.addLayout(name_layout)
+        name_group.setLayout(name_layout)
+        right_layout.addWidget(name_group)
         right_layout.addStretch()
 
         # Buttons
         button_layout = QHBoxLayout()
+        button_layout.addStretch()
         extract_btn = QPushButton("Extract")
         extract_btn.clicked.connect(self.validate_extract)
         button_layout.addWidget(extract_btn)

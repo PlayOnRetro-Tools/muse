@@ -8,7 +8,7 @@ from musa.util.image import Image
 class AlphaColorPickerButton(QPushButton):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setFixedSize(36, 20)
+        self.setFixedSize(40, 16)
         self.setCursor(Qt.PointingHandCursor)
 
         # Current transparent color
