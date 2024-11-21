@@ -18,7 +18,7 @@ class TimelineView(QGraphicsView):
     def __init__(self, model: TimelineModel):
         super().__init__()
         self.model = model
-        self.scene = QGraphicsScene()
+        self.scene = QGraphicsScene(self)
         self.setScene(self.scene)
 
         self.setContentsMargins(0, 0, 0, 0)
@@ -31,7 +31,7 @@ class TimelineView(QGraphicsView):
         self.pixels_per_frame = self._PIXELS_PER_FRAME
         self.timeline_height = 0
 
-        self.model.undo_stack.indexChanged.connect(self.setup_timeline)
+        self.model.modelChanged.connect(self.setup_timeline)
 
         self.setup_timeline()
 

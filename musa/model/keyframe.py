@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List, Optional, Set
 
 from PyQt5.QtGui import QColor
 
@@ -20,13 +20,21 @@ class Track:
         return next((kf for kf in self.keyframes if kf.frame == frame), None)
 
     def get_adjacent_keyframes(
-        self, frame: int
+        self, frame: int, exclude_frames: Set[int] = None
     ) -> tuple[Optional[KeyFrame], Optional[KeyFrame]]:
-        """Get the nearest keyframes before and after the given frame."""
+        """Get the nearest keyframes before and after the given frame, exlcuding specified frames."""
+        if exclude_frames is None:
+            exclude_frames = set()
+
         prev_kf = None
         next_kf = None
 
-        for kf in sorted(self.keyframes, key=lambda x: x.frame):
+        sorted_keyframes = sorted(
+            (kf for kf in self.keyframes if kf.frame not in exclude_frames),
+            key=lambda x: x.frame,
+        )
+
+        for kf in sorted_keyframes:
             if kf.frame < frame:
                 prev_kf = kf
             elif kf.frame > frame:
