@@ -1,12 +1,13 @@
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QHBoxLayout, QMainWindow, QToolBar, QWidget
+from PyQt5.QtWidgets import QHBoxLayout, QMainWindow, QWidget
 
+from musa.controller.animation_controller import AnimationController
 from musa.manager import DockConfig, DockManager
-from musa.model.keyframe import KeyFrame, Track
+from musa.model.animation import AnimationsModel
+from musa.widget.animation_dock import AnimationDock
 from musa.widget.event_filter import PanControl, ZoomControl
 from musa.widget.palette import SpritePaletteWidget
 from musa.widget.scene import EditorScene, EditorView
-from musa.widget.timeline import TimelineModel, TimelineView
 
 
 class MusaMainWindow(QMainWindow):
@@ -16,24 +17,10 @@ class MusaMainWindow(QMainWindow):
         self.setWindowTitle("M.U.S.E")
 
         # Models
-        self.timeline_model = TimelineModel()
-
-        # Test data
-        track1 = Track("Position")
-        track1.keyframes = [KeyFrame(30, 105), KeyFrame(80, 10)]
-
-        track2 = Track("Scale")
-        track2.keyframes = [KeyFrame(30, 105), KeyFrame(80, 10)]
-
-        track3 = Track("Rotation")
-        track3.keyframes = [KeyFrame(50, 105), KeyFrame(100, 10)]
-
-        self.timeline_model.add_track(track1)
-        self.timeline_model.add_track(track2)
-        self.timeline_model.add_track(track3)
+        self.animation_model = AnimationsModel()
+        self.animation_controller = AnimationController(self.animation_model)
 
         self.setup_ui()
-        self.create_toolbar()
 
     def setup_ui(self):
         content = QWidget()
@@ -60,28 +47,15 @@ class MusaMainWindow(QMainWindow):
             ),
         )
 
-        # Animation timeline
-        timeline = TimelineView(self.timeline_model)
+        animation = AnimationDock(self.animation_model, self.animation_controller, self)
         self.docks.create_dock(
-            "TIMELINE",
+            "ANIMATION",
             DockConfig(
                 "Animation",
                 Qt.BottomDockWidgetArea,
                 Qt.BottomDockWidgetArea | Qt.TopDockWidgetArea,
-                timeline,
+                animation,
             ),
         )
 
         self.setCentralWidget(content)
-
-    def create_toolbar(self):
-        toolbar = QToolBar()
-        self.addToolBar(toolbar)
-
-        undo = self.timeline_model.undo_stack.createUndoAction(self, "Undo")
-        undo.setShortcut("Ctrl+Z")
-        redo = self.timeline_model.undo_stack.createRedoAction(self, "Redo")
-        redo.setShortcut("Ctrl+R")
-
-        toolbar.addAction(undo)
-        toolbar.addAction(redo)

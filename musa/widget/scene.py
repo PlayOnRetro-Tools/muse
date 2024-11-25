@@ -8,8 +8,8 @@ from musa.item import SpriteItem
 class EditorGrid:
     __backGridColor = QColor("#080808")
     __foreGridColor = QColor(210, 210, 210, 200)
-    __darkColor = QColor("#404040")
-    __lightColor = QColor("#666666")
+    __darkColor = QColor("#323232")
+    __lightColor = QColor("#505050")
 
     def __init__(self, view: QGraphicsView, size: int = 32) -> None:
         self.view = view
