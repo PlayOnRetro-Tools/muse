@@ -4,6 +4,7 @@ from typing import Optional
 from PyQt5.QtWidgets import QFileDialog
 
 from .preview_image_dialog import ImageFileDialog
+from .text_input_dialog import TextInputDialog
 
 
 class FileDialogFactory:
@@ -47,3 +48,9 @@ class FileDialogFactory:
         if dialog.exec_() == ImageFileDialog.Accepted:
             file = dialog.get_file_selected()
             return Path(file)
+
+    @staticmethod
+    def name_input(title: str, label: str) -> Optional[str]:
+        dialog = TextInputDialog(title, label)
+        if dialog.exec_() == TextInputDialog.Accepted:
+            return dialog.get_text()

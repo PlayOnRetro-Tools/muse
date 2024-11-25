@@ -6,6 +6,7 @@ from PyQt5.QtGui import QImage, QPixmap, QRegExpValidator
 from PyQt5.QtWidgets import (
     QDialog,
     QFormLayout,
+    QFrame,
     QGroupBox,
     QHBoxLayout,
     QLabel,
@@ -77,6 +78,20 @@ class SpriteSheetDialog(QDialog):
             lambda x: self.zoom_slider.setValue(int(x * 10))
         )
         left_layout.addWidget(self.img_viewer)
+
+        # Image path info
+        path_layout = QHBoxLayout()
+        path_layout.setAlignment(Qt.AlignLeft)
+        path_layout.addWidget(QLabel("Path:"))
+
+        path_container = QFrame()
+        path_container.setFrameStyle(QFrame.StyledPanel)
+        container_layout = QHBoxLayout()
+        container_layout.addWidget(QLabel(f"{self.image_path}"))
+        path_container.setLayout(container_layout)
+        path_layout.addWidget(path_container)
+
+        left_layout.addLayout(path_layout)
 
         # Connect signals
         self.alpha_btn.clicked.connect(lambda clicked: self.pick_alpha())

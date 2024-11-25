@@ -14,6 +14,7 @@ from musa.controller.animation_controller import AnimationController
 from musa.model.animation import AnimationsModel
 
 from .piece_inspector import PieceInspector
+from .playback_control import PlayBackWidget
 
 
 class FrameListItem(QWidget):
@@ -37,7 +38,7 @@ class FrameListItem(QWidget):
 
 
 class ListWidget(QWidget):
-    currentSelectedChanged = pyqtSignal(QListWidgetItem, QListWidgetItem)
+    itemSelected = pyqtSignal(QListWidgetItem)
     itemEditChanged = pyqtSignal(QListWidgetItem)
     addClicked = pyqtSignal(int)
     delClicked = pyqtSignal(int)
@@ -55,7 +56,7 @@ class ListWidget(QWidget):
         self.list.setEditTriggers(
             QListWidget.DoubleClicked | QListWidget.EditKeyPressed
         )
-        self.list.currentItemChanged.connect(self.currentSelectedChanged)
+        self.list.itemClicked.connect(self.itemSelected)
         self.list.itemChanged.connect(self.itemEditChanged)
 
         # Connections
@@ -120,54 +121,74 @@ class AnimationDock(QWidget):
         self, model: AnimationsModel, controller: AnimationController, parent=None
     ):
         super().__init__(parent)
-        self.setup_ui()
-
         self.controller = controller
         self.model = model
 
-        # Make connections
+        self.setup_ui()
+        self.make_connections()
+        self.populate()
+
+    def populate(self):
+        for animation in self.model.get_animations():
+            self.animation_list.add_item(animation)
+
+    def make_connections(self):
         self.animation_list.addClicked.connect(self.controller.add_animation)
+        self.animation_list.itemSelected.connect(self._on_animation_selected)
+
         self.frame_list.addClicked.connect(self.controller.add_frame)
+        self.frame_list.itemSelected.connect(self._on_frame_selected)
+
+        self.piece_list.itemSelected.connect(self._on_piece_selected)
+
+        self.model.createdAnimation.connect(self._on_add_animation)
+
+    def _on_animation_selected(self, item: QListWidgetItem):
+        animation = self.model.get_animation(item.text())
+
+        self.frame_list.clear()
+        self.piece_list.clear()
+
+        for frame in animation:
+            self.frame_list.add_item(frame.name, frame.ticks)
+
+    def _on_frame_selected(self, item: QListWidget):
+        anim_name = self.animation_list.list.currentItem().text()
+        animation = self.model.get_animation(anim_name)
+        frame = animation.get_frame(self.frame_list.list.row(item))
+
+        self.piece_list.clear()
+        for piece in frame:
+            self.piece_list.add_item(piece.name)
+
+    def _on_piece_selected(self, item: QListWidgetItem):
+        anim_name = self.animation_list.list.currentItem().text()
+        animation = self.model.get_animation(anim_name)
+        frame = animation.get_frame(self.frame_list.list.currentRow())
+
+        piece = frame.get_piece(item.text())
+        self.piece_inspector.show_piece(piece)
+
+    def _on_add_animation(self, name: str):
+        self.animation_list.add_item(name)
 
     def setup_ui(self):
-        self.setContentsMargins(0, 0, 0, 0)
         layout = QVBoxLayout()
 
-        control_layout = QHBoxLayout()
-
-        self.play_btn = QPushButton("Play")
-        self.stop_btn = QPushButton("Stop")
-        self.prev_btn = QPushButton("<")
-        self.next_btn = QPushButton(">")
-
-        self.play_btn.setCheckable(True)
-
-        self.fps_label = QLabel("Fps:")
-        self.fps_spin = QSpinBox()
-        self.fps_spin.setMaximum(60)
-        self.fps_spin.setMinimum(1)
-        self.fps_spin.setValue(16)
-
-        control_layout.addStretch()
-        control_layout.addWidget(self.prev_btn)
-        control_layout.addWidget(self.stop_btn)
-        control_layout.addWidget(self.play_btn)
-        control_layout.addWidget(self.next_btn)
-        control_layout.addWidget(self.fps_label)
-        control_layout.addWidget(self.fps_spin)
-        control_layout.addStretch()
-        control_layout.setAlignment(Qt.AlignLeft)
-        layout.addLayout(control_layout)
+        self.playback = PlayBackWidget(self)
+        layout.addWidget(self.playback)
+        self.playback.hide()
 
         hbox_layout = QHBoxLayout()
         self.animation_list = ListWidget("Animations")
         self.frame_list = ListWidget("Frames", allow_edit=False)
         self.piece_list = ListWidget("Pieces", True, False)
         self.piece_inspector = PieceInspector()
-        hbox_layout.addWidget(self.animation_list, 1)
-        hbox_layout.addWidget(self.frame_list, 2)
-        hbox_layout.addWidget(self.piece_list, 1)
+        hbox_layout.addWidget(self.animation_list)
+        hbox_layout.addWidget(self.frame_list)
+        hbox_layout.addWidget(self.piece_list)
         hbox_layout.addWidget(self.piece_inspector, 2)
+        hbox_layout.setAlignment(Qt.AlignJustify)
         layout.addLayout(hbox_layout)
 
         self.setLayout(layout)
