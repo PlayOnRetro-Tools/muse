@@ -1,6 +1,7 @@
 from PyQt5.QtCore import QItemSelectionModel
 from PyQt5.QtWidgets import QHBoxLayout, QWidget
 
+from musa.model.animation_collection import AnimationCollection
 from musa.widget.animation_list import AnimationListWidget
 from musa.widget.frame_list import FrameListWidget
 from musa.widget.sprite_inspector import SpriteInspector
@@ -8,7 +9,7 @@ from musa.widget.sprite_list import SpriteListWidget
 
 
 class AnimationDock(QWidget):
-    def __init__(self, model, parent=None):
+    def __init__(self, model: AnimationCollection, parent=None):
         super().__init__(parent)
         self.setup_ui(model)
         self.connections()

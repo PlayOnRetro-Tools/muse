@@ -10,9 +10,11 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
+from musa.model.animation_collection import AnimationCollection
+
 
 class SpriteListModel(QAbstractListModel):
-    def __init__(self, data_model, parent=None):
+    def __init__(self, data_model: AnimationCollection, parent=None):
         super().__init__(parent)
         self.data_model = data_model
         self.current_animation = -1
@@ -93,7 +95,7 @@ class SpriteItemDelegate(QStyledItemDelegate):
 
         # Draw visibility icon
         visible = index.data(Qt.UserRole)
-        icon_text = "👁️" if visible else "''''''''''''''👁️‍🗨️"
+        icon_text = "👁️" if visible else "'👁️‍🗨️"
         painter.drawText(
             option.rect.adjusted(option.rect.width() - 35, 5, -5, -5),
             Qt.AlignVCenter | Qt.AlignRight,
@@ -113,7 +115,7 @@ class SpriteItemDelegate(QStyledItemDelegate):
 class SpriteListWidget(QWidget):
     spriteSelected = pyqtSignal(object)
 
-    def __init__(self, model, parent=None):
+    def __init__(self, model: AnimationCollection, parent=None):
         super().__init__(parent)
         self.setup_ui()
 

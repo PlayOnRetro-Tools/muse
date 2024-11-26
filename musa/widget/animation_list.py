@@ -1,4 +1,4 @@
-from PyQt5.QtCore import QAbstractListModel, QModelIndex, Qt, pyqtSignal
+from PyQt5.QtCore import QAbstractListModel, QModelIndex, Qt
 from PyQt5.QtWidgets import (
     QHBoxLayout,
     QLabel,
@@ -8,9 +8,11 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
+from musa.model.animation_collection import AnimationCollection
+
 
 class AnimationListModel(QAbstractListModel):
-    def __init__(self, data_model, parent=None):
+    def __init__(self, data_model: AnimationCollection, parent=None):
         super().__init__(parent)
         self.data_model = data_model
 
@@ -21,7 +23,7 @@ class AnimationListModel(QAbstractListModel):
         if not index.isValid():
             return None
 
-        animation = self.data_model.get_animations()[index.row()]
+        animation = self.data_model.list_animations()[index.row()]
 
         if role == Qt.DisplayRole:
             return animation.name
@@ -30,7 +32,7 @@ class AnimationListModel(QAbstractListModel):
 
 
 class AnimationListWidget(QWidget):
-    def __init__(self, model, parent=None):
+    def __init__(self, model: AnimationCollection, parent=None):
         super().__init__(parent)
         self.setup_ui()
 

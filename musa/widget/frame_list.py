@@ -11,9 +11,11 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
+from musa.model.animation_collection import AnimationCollection
+
 
 class FrameListModel(QAbstractListModel):
-    def __init__(self, data_model, parent=None):
+    def __init__(self, data_model: AnimationCollection, parent=None):
         super().__init__(parent)
         self.data_model = data_model
         self.current_animation = -1
@@ -91,12 +93,12 @@ class FrameItemDelegate(QStyledItemDelegate):
         painter.drawText(
             option.rect.adjusted(option.rect.width() - 65, 5, -5, -5),
             Qt.AlignVCenter | Qt.AlignRight,
-            f"{duration}Ticks",
+            f"{duration} Ticks",
         )
 
 
 class FrameListWidget(QWidget):
-    def __init__(self, model, parent=None):
+    def __init__(self, model: AnimationCollection, parent=None):
         super().__init__(parent)
         self.setup_ui()
 
