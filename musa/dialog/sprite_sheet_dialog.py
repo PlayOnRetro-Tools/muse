@@ -47,6 +47,7 @@ class SpriteSheetDialog(QDialog):
 
         main_layout = QHBoxLayout()
         right_layout = QVBoxLayout()
+        right_layout.addSpacing(20)
         left_layout = QVBoxLayout()
 
         control_layout = QHBoxLayout()

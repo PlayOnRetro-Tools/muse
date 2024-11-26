@@ -1,6 +1,7 @@
 from PyQt5.QtCore import QItemSelectionModel
 from PyQt5.QtWidgets import QHBoxLayout, QWidget
 
+from musa.model.animation import Animation
 from musa.model.animation_collection import AnimationCollection
 from musa.widget.animation_list import AnimationListWidget
 from musa.widget.frame_list import FrameListWidget
@@ -9,17 +10,18 @@ from musa.widget.sprite_list import SpriteListWidget
 
 
 class AnimationDock(QWidget):
-    def __init__(self, model: AnimationCollection, parent=None):
+    def __init__(self, collection: AnimationCollection, parent=None):
         super().__init__(parent)
-        self.setup_ui(model)
+        self.collection = collection
+        self.setup_ui()
         self.connections()
 
-    def setup_ui(self, model):
+    def setup_ui(self):
         layout = QHBoxLayout()
 
-        self.animation_list = AnimationListWidget(model)
-        self.frame_list = FrameListWidget(model)
-        self.sprite_list = SpriteListWidget(model)
+        self.animation_list = AnimationListWidget(self.collection)
+        self.frame_list = FrameListWidget()
+        self.sprite_list = SpriteListWidget()
         self.sprite_inspector = SpriteInspector()
 
         layout.addWidget(self.animation_list, 1)
@@ -30,17 +32,15 @@ class AnimationDock(QWidget):
         self.setLayout(layout)
 
     def connections(self):
-        self.animation_list.list.selectionModel().currentChanged.connect(
-            self._on_animation_selected
-        )
+        self.animation_list.animationSelected.connect(self._on_animation_selected)
         self.frame_list.list.selectionModel().currentChanged.connect(
             self._on_frame_selected
         )
         self.sprite_list.spriteSelected.connect(self.sprite_inspector.set_sprite)
 
-    def _on_animation_selected(self, current: QItemSelectionModel, previous):
-        animation_index = current.row() if current.isValid() else -1
-        self.frame_list.frame_model.set_current_animation(animation_index)
+    def _on_animation_selected(self, animation: Animation):
+        self.frame_list.set_animation(animation)
+
         # Clear sprites when animation changes
         self.sprite_list.sprite_model.set_current_frame(-1, -1)
 

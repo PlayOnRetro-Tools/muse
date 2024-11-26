@@ -1,9 +1,8 @@
 from typing import Any, Dict, Iterator, List, Optional
 from uuid import UUID
 
-from iterator import CollectionIterator, I
-
 from .animation import Animation
+from .iterator import CollectionIterator, I
 from .observable import CollectionSignals
 
 

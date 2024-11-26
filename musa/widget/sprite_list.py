@@ -11,6 +11,8 @@ from PyQt5.QtWidgets import (
 )
 
 from musa.model.animation_collection import AnimationCollection
+from musa.model.frame import Frame
+from musa.model.sprite import Sprite
 
 
 class SpriteListModel(QAbstractListModel):
@@ -21,11 +23,9 @@ class SpriteListModel(QAbstractListModel):
         self.current_frame = -1
 
     def rowCount(self, parent=QModelIndex()):
+        return 0
         if self.current_animation < 0 or self.current_frame < 0:
             return 0
-        return len(
-            self.data_model.get_sprites(self.current_animation, self.current_frame)
-        )
 
     def data(self, index, role=Qt.DisplayRole):
         if not index.isValid() or self.current_animation < 0 or self.current_frame < 0:
@@ -95,7 +95,7 @@ class SpriteItemDelegate(QStyledItemDelegate):
 
         # Draw visibility icon
         visible = index.data(Qt.UserRole)
-        icon_text = "👁️" if visible else "'👁️‍🗨️"
+        icon_text = "👁️" if visible else "''👁️‍🗨️"
         painter.drawText(
             option.rect.adjusted(option.rect.width() - 35, 5, -5, -5),
             Qt.AlignVCenter | Qt.AlignRight,
@@ -115,20 +115,21 @@ class SpriteItemDelegate(QStyledItemDelegate):
 class SpriteListWidget(QWidget):
     spriteSelected = pyqtSignal(object)
 
-    def __init__(self, model: AnimationCollection, parent=None):
+    def __init__(self, frame=None, parent=None):
         super().__init__(parent)
         self.setup_ui()
 
-        self.data_model = model
+        self.data_model = frame
         self.sprite_model = SpriteListModel(self.data_model)
         self.list.setModel(self.sprite_model)
         self.list.setItemDelegate(SpriteItemDelegate())
 
         self.list.selectionModel().currentChanged.connect(self._on_sprite_selected)
 
-        # Reorder buttons
+        # Buttons
         self.up_btn.clicked.connect(self._move_sprite_up)
         self.down_btn.clicked.connect(self._move_sprite_down)
+        self.del_btn.clicked.connect(self._on_sprite_remove)
 
     def setup_ui(self):
         layout = QVBoxLayout()
@@ -202,3 +203,6 @@ class SpriteListWidget(QWidget):
 
         self.sprite_model.move_sprite(current.row(), current.row() + 1)
         self.sprites_view.setCurrentIndex(self.sprite_model.index(current.row() + 1, 0))
+
+    def _on_sprite_remove(self):
+        pass

@@ -48,16 +48,6 @@ class EditorGrid:
         pen.setColor(self.__foreGridColor)
         painter.setPen(pen)
 
-        # Viewport rectangle
-        painter.drawRect(
-            QRectF(
-                -self.frame_size.width() / 2,
-                -self.frame_size.height() / 2,
-                self.frame_size.width(),
-                self.frame_size.height(),
-            )
-        )
-
     def drawForeground(self, painter: QPainter, rect) -> None:
         start = 6
         end = 2
@@ -129,9 +119,9 @@ class EditorView(QGraphicsView):
         self.setTransformationAnchor(QGraphicsView.NoAnchor)
         self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
         self.setCacheMode(QGraphicsView.CacheBackground)
-        self.setFrameStyle(QFrame.NoFrame)
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.setFrameStyle(QFrame.StyledPanel)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setDragMode(QGraphicsView.RubberBandDrag)
 
         self.grid = EditorGrid(self)

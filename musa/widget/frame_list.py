@@ -1,3 +1,6 @@
+from typing import Any, List, Optional
+from uuid import UUID
+
 from PyQt5.QtCore import QAbstractListModel, QModelIndex, QSize, Qt, pyqtSignal
 from PyQt5.QtWidgets import (
     QHBoxLayout,
@@ -11,71 +14,117 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
-from musa.model.animation_collection import AnimationCollection
+from musa.model.animation import Animation
+from musa.model.frame import Frame
 
 
 class FrameListModel(QAbstractListModel):
-    def __init__(self, data_model: AnimationCollection, parent=None):
+    def __init__(self, animation: Animation, parent=None):
         super().__init__(parent)
-        self.data_model = data_model
-        self.current_animation = -1
+        self.animation = animation
+        self.frames: List[UUID] = []
 
-    def rowCount(self, parent=QModelIndex()):
-        if self.current_animation < 0:
-            return 0
-        return len(self.data_model.get_frames(self.current_animation))
+    def _refresh_frame_list(self):
+        self.frames = [f.id for f in self.animation.frames]
 
-    def data(self, index, role=Qt.DisplayRole):
-        if not index.isValid() or self.current_animation < 0:
+    def rowCount(self, parent: QModelIndex = QModelIndex()) -> int:
+        return len(self.frames)
+
+    def data(self, index: QModelIndex, role: int = Qt.DisplayRole) -> Any:
+        if not index.isValid() or not 0 <= index.row() < len(self.frames):
             return None
 
-        frame = self.data_model.get_frames(self.current_animation)[index.row()]
+        frame = self.animation.get_frame(self.frames[index.row()])
 
         if role == Qt.DisplayRole:
             return frame.name
-        elif role == Qt.UserRole:  # Use UserRole to store duration
-            return frame.duration
+        elif role == Qt.EditRole:
+            return frame.ticks
+        elif role == Qt.UserRole:
+            return frame.ticks
 
         return None
 
-    def setData(self, index, value, role=Qt.EditRole):
-        if not index.isValid() or self.current_animation < 0:
+    def flags(self, index: QModelIndex) -> Qt.ItemFlags:
+        if not index.isValid():
+            return Qt.NoItemFlags
+        return super().flags(index) | Qt.ItemIsEditable
+
+    def setData(self, index: QModelIndex, value: Any, role: int = Qt.EditRole) -> bool:
+        if not index.isValid() or not 0 <= index.row() < len(self.animation.frames):
             return False
 
-        if role == Qt.UserRole:  # For duration updates
-            self.data_model.set_frame_duration(
-                self.current_animation, index.row(), value
-            )
-            self.dataChanged.emit(index, index, [role])
+        if role == Qt.UserRole:
+            frame = self.animation.get_frame(self.frames[index.row()])
+            self.animation.update_frame(frame.id, ticks=value)
+            self.animation.mark_frame_modified(frame.id)
+
+            self.dataChanged.emit(index, index)
             return True
 
         return False
 
-    def set_current_animation(self, animation_index):
+    def set_current_animation(self, animation: Animation):
         self.beginResetModel()
-        self.current_animation = animation_index
+        self.animation = animation
+        self._refresh_frame_list()
+
+        # connect to animation signals
+        self.animation.signals.frameAdded.connect(self._on_frame_changed)
+        self.animation.signals.frameRemoved.connect(self._on_frame_changed)
+        self.animation.signals.frameModified.connect(self._on_frame_modified)
+        self.animation.signals.animationModified.connect(self._on_animation_modified)
+
         self.endResetModel()
+
+    def _on_frame_changed(self, animation_id: UUID, frame_id: Optional[UUID] = None):
+        if animation_id == self.animation.id:
+            self.beginResetModel()
+            self._refresh_frame_list()
+            self.endResetModel()
+
+    def _on_frame_modified(self, animation_id: UUID, frame_id: UUID):
+        if animation_id == self.animation.id:
+            try:
+                row = next(
+                    i
+                    for i, frame in enumerate(self.animation.frames)
+                    if frame.id == frame_id
+                )
+                index = self.index(row, 0)
+                self.dataChanged.emit(index, index)
+            except StopIteration:
+                pass
+
+    def _on_animation_modified(self, animation_id: UUID):
+        if animation_id == self.animation.id:
+            self.beginResetModel()
+            self._refresh_frame_list()
+            self.endResetModel()
 
 
 class FrameItemDelegate(QStyledItemDelegate):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.duration_changed = pyqtSignal(QModelIndex, int)
 
-    def createEditor(self, parent, option, index):
+    def createEditor(self, parent, option, index: QModelIndex):
         editor = QSpinBox(parent)
         editor.setRange(1, 1000)
         editor.setValue(index.data(Qt.UserRole))
         return editor
 
-    def setEditorData(self, editor, index):
-        editor.setValue(index.data(Qt.UserRole))
+    def setEditorData(self, editor: QSpinBox, index: QModelIndex):
+        value = index.model().data(index, Qt.EditRole)
+        editor.setValue(value)
 
-    def setModelData(self, editor, model, index):
-        model.setData(index, editor.value(), Qt.UserRole)
+    def setModelData(
+        self, editor: QSpinBox, model: QAbstractListModel, index: QModelIndex
+    ):
+        value = editor.value()
+        model.setData(index, value, Qt.UserRole)
 
     def sizeHint(self, option, index):
-        return QSize(200, 40)
+        return QSize(90, 25)
 
     def paint(self, painter, option, index):
         if option.state & QStyle.State_Selected:
@@ -89,23 +138,36 @@ class FrameItemDelegate(QStyledItemDelegate):
         )
 
         # Draw the duration value
-        duration = str(index.data(Qt.UserRole))
+        ticks = str(index.data(Qt.EditRole))
         painter.drawText(
             option.rect.adjusted(option.rect.width() - 65, 5, -5, -5),
             Qt.AlignVCenter | Qt.AlignRight,
-            f"{duration} Ticks",
+            f"{ticks}",
         )
 
 
 class FrameListWidget(QWidget):
-    def __init__(self, model: AnimationCollection, parent=None):
+    def __init__(self, animation: Animation = None, parent=None):
         super().__init__(parent)
         self.setup_ui()
 
-        self.data_model = model
-        self.frame_model = FrameListModel(self.data_model)
+        # Default buttons state
+        self.add_btn.setEnabled(False)
+        self.del_btn.setEnabled(False)
+
+        self.animation = animation
+        self.frame_model = FrameListModel(self.animation)
         self.list.setModel(self.frame_model)
         self.list.setItemDelegate(FrameItemDelegate())
+
+        # connections
+        self.add_btn.clicked.connect(self._on_frame_add)
+        self.del_btn.clicked.connect(self._on_frame_remove)
+
+    def set_animation(self, animation: Animation):
+        self.animation = animation
+        self.frame_model.set_current_animation(self.animation)
+        self.add_btn.setEnabled(True)
 
     def setup_ui(self):
         layout = QVBoxLayout()
@@ -135,3 +197,12 @@ class FrameListWidget(QWidget):
         layout.addLayout(hbox)
 
         self.setLayout(layout)
+
+    def _on_frame_add(self):
+        base_name = self.animation.name
+        index = len(self.animation.frames)
+        dummy = Frame(name=f"{base_name.upper()} {index}")
+        self.animation.add_frame(dummy)
+
+    def _on_frame_remove(self):
+        pass

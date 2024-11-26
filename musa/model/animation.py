@@ -41,7 +41,7 @@ class Animation(Serializable):
 
     def update_frame(self, frame_id: UUID, **kwargs) -> bool:
         if frame := self.get_frame(frame_id):
-            for key, value in kwargs.item():
+            for key, value in kwargs.items():
                 if hasattr(frame, key):
                     setattr(frame, key, value)
             self.signals.frameModified.emit(self.id, frame_id)
