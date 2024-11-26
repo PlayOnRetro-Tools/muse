@@ -1,7 +1,6 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QHBoxLayout, QMainWindow, QWidget
 
-from musa.controller.animation_controller import AnimationController
 from musa.manager import DockConfig, DockManager
 from musa.model.animation import AnimationsModel
 from musa.widget.event_filter import PanControl, ZoomControl

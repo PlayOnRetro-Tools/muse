@@ -50,3 +50,15 @@ class AnimationsModel(QObject):
 
     def get_animations(self) -> List[str]:
         return list(self.animations.keys())
+
+
+# class AnimationDataModel:
+#     # ... (Previous methods remain the same) ...
+
+#     def set_sprite_property(self, animation_index, frame_index, sprite_index, property_name, value):
+#         """Update a sprite property"""
+#         pass
+
+#     def move_sprite(self, animation_index, frame_index, from_index, to_index):
+#         """Move a sprite in the z-order"""
+#         pass

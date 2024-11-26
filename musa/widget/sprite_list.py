@@ -93,7 +93,7 @@ class SpriteItemDelegate(QStyledItemDelegate):
 
         # Draw visibility icon
         visible = index.data(Qt.UserRole)
-        icon_text = "👁️" if visible else "''''''''''''👁️‍🗨️"
+        icon_text = "👁️" if visible else "''''''''''''''👁️‍🗨️"
         painter.drawText(
             option.rect.adjusted(option.rect.width() - 35, 5, -5, -5),
             Qt.AlignVCenter | Qt.AlignRight,
@@ -111,6 +111,8 @@ class SpriteItemDelegate(QStyledItemDelegate):
 
 
 class SpriteListWidget(QWidget):
+    spriteSelected = pyqtSignal(object)
+
     def __init__(self, model, parent=None):
         super().__init__(parent)
         self.setup_ui()
@@ -172,7 +174,7 @@ class SpriteListWidget(QWidget):
             return
 
         sprite = current.data(Qt.UserRole + 1)
-        self.properties_widget.update_sprite(sprite)
+        self.spriteSelected.emit(sprite)
 
     def _update_reorder_buttons(self, current):
         """Enable/disable reorder buttons based on current selection"""
