@@ -1,28 +1,36 @@
-from typing import Dict, Iterator, List
+from dataclasses import dataclass, field
+from typing import Any, Dict, Iterator, List, Optional
+from uuid import UUID
 
-from .iterator import CollectionIterator, T
-from .piece import Piece
-from .serializable import Serializable
+from .iterator import CollectionIterator, I
+from .serializable import Serializable, T
+from .sprite import Sprite
 
 
+@dataclass
 class Frame(Serializable):
-    def __init__(self, name: str, pieces: List[Piece] = None, ticks: int = 1):
-        super().__init__(name=name)
-        self.pieces: Dict[str, Piece] = {}
-        self.ticks = ticks
+    name: str = ""
+    ticks: int = 1
+    sprites: List[Sprite] = field(default_factory=list)
 
-        if pieces:
-            self.pieces = {piece.name: piece for piece in pieces}
+    @classmethod
+    def from_dict(cls: type[T], data: Dict[str, Any]) -> "Frame":
+        sprites_data = data.pop("sprites", [])
+        frame = super().from_dict(data)
+        frame.sprites = [Sprite.from_dict(s) for s in sprites_data]
+        return frame
 
-    def get_piece(self, name: str):
-        return self.pieces.get(name)
+    def add_sprite(self, sprite: Sprite) -> None:
+        self.sprites.append(sprite)
 
-    def add_piece(self, piece: Piece):
-        self.pieces.append(piece)
+    def remove_sprite(self, sprite_id: UUID) -> Optional[Sprite]:
+        for i, sprite in enumerate(self.sprites):
+            if sprite.id == sprite_id:
+                return self.sprites.pop(i)
+        return None
 
-    def remove_piece(self, piece: Piece):
-        index = self.pieces.index(piece)
-        self.pieces.pop(index)
+    def get_sprite(self, sprite_id: UUID) -> Optional[Sprite]:
+        return next((s for s in self.sprites if s.id == sprite_id), None)
 
-    def __iter__(self) -> Iterator[T]:
-        return CollectionIterator(list(self.pieces.values()))
+    def __iter__(self) -> Iterator[I]:
+        return CollectionIterator(self.sprites)

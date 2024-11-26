@@ -35,7 +35,7 @@ class AnimationDock(QWidget):
         self.frame_list.list.selectionModel().currentChanged.connect(
             self._on_frame_selected
         )
-        self.sprite_list.spriteSelected.connect(self.sprite_inspector.update_sprite)
+        self.sprite_list.spriteSelected.connect(self.sprite_inspector.set_sprite)
 
     def _on_animation_selected(self, current: QItemSelectionModel, previous):
         animation_index = current.row() if current.isValid() else -1

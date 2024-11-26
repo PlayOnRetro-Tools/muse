@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
-from musa.model.piece import Piece
+from musa.model.sprite import Sprite
 
 
 class SpriteInspector(QWidget):
@@ -19,10 +19,10 @@ class SpriteInspector(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.current_sprite: Piece = None
+        self.current_sprite: Sprite = None
 
         self.setup_ui()
-        self.update_sprite(None)
+        self.set_sprite(None)
 
         # Connections
         self.x_pos_spin.valueChanged.connect(
@@ -32,10 +32,13 @@ class SpriteInspector(QWidget):
             lambda value: self.propertyChanged.emit("y", value)
         )
         self.hflip_check_box.stateChanged.connect(
-            lambda state: self.propertyChanged.emit("flip_h", state == Qt.Checked)
+            lambda state: self.propertyChanged.emit("h_flip", state == Qt.Checked)
         )
         self.vflip_check_box.stateChanged.connect(
-            lambda state: self.propertyChanged.emit("flip_v", state == Qt.Checked)
+            lambda state: self.propertyChanged.emit("h_flip", state == Qt.Checked)
+        )
+        self.opacity_slider.valueChanged.connect(
+            lambda value: self.propertyChanged.emit("opacity", value)
         )
 
     def setup_ui(self):
@@ -76,7 +79,7 @@ class SpriteInspector(QWidget):
         layout.addWidget(container)
         self.setLayout(layout)
 
-    def update_sprite(self, sprite: Piece):
+    def set_sprite(self, sprite: Sprite):
         self.current_sprite = sprite
         if sprite is None:
             self.setEnabled(False)
