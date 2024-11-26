@@ -6,6 +6,7 @@ from musa.model.animation_collection import AnimationCollection
 from musa.widget.event_filter import PanControl, ZoomControl
 from musa.widget.palette import SpritePaletteWidget
 from musa.widget.scene import EditorScene, EditorView
+from musa.widget.sprite_inspector import SpriteInspector
 
 from .animation_dock import AnimationDock
 
@@ -54,6 +55,20 @@ class MusaMainWindow(QMainWindow):
                 Qt.BottomDockWidgetArea,
                 Qt.BottomDockWidgetArea | Qt.TopDockWidgetArea,
                 animation,
+            ),
+        )
+
+        inspector = SpriteInspector()
+        self.docks.create_dock(
+            "INSPECTOR",
+            DockConfig(
+                "Inspector",
+                Qt.BottomDockWidgetArea,
+                Qt.BottomDockWidgetArea
+                | Qt.RightDockWidgetArea
+                | Qt.LeftDockWidgetArea,
+                inspector,
+                resizable=False,
             ),
         )
 

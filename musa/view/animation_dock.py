@@ -5,7 +5,6 @@ from musa.model.animation import Animation
 from musa.model.animation_collection import AnimationCollection
 from musa.widget.animation_list import AnimationListWidget
 from musa.widget.frame_list import FrameListWidget
-from musa.widget.sprite_inspector import SpriteInspector
 from musa.widget.sprite_list import SpriteListWidget
 
 
@@ -22,12 +21,10 @@ class AnimationDock(QWidget):
         self.animation_list = AnimationListWidget(self.collection)
         self.frame_list = FrameListWidget()
         self.sprite_list = SpriteListWidget()
-        self.sprite_inspector = SpriteInspector()
 
         layout.addWidget(self.animation_list, 1)
         layout.addWidget(self.frame_list, 1)
         layout.addWidget(self.sprite_list, 2)
-        layout.addWidget(self.sprite_inspector, 2)
 
         self.setLayout(layout)
 
@@ -36,7 +33,6 @@ class AnimationDock(QWidget):
         self.frame_list.list.selectionModel().currentChanged.connect(
             self._on_frame_selected
         )
-        self.sprite_list.spriteSelected.connect(self.sprite_inspector.set_sprite)
 
     def _on_animation_selected(self, animation: Animation):
         self.frame_list.set_animation(animation)

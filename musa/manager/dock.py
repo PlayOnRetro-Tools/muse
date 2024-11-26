@@ -26,6 +26,7 @@ class DockConfig:
     widget: Optional[QWidget] = None
     widget_class: Optional[Type[QWidget]] = None
     floating: bool = False
+    resizable: bool = True
     closable: bool = True
     add_view: bool = True
     close_action: DockCloseAction = DockCloseAction.HIDE
@@ -57,6 +58,7 @@ class DockManager:
         dock.close_action = config.close_action
         dock.close_handler = config.on_close
         dock.visibility_handler = config.on_visibility_changed
+        dock.resizable = config.resizable
 
         # Configure dock features
         features = QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetMovable

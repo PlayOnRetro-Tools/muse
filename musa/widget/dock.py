@@ -20,6 +20,9 @@ class CustomDockWidget(QDockWidget):
         self.close_action = DockCloseAction.HIDE
         self.close_handler = None
         self.visibility_handler = None
+        self.resizable = None
+
+        self.topLevelChanged.connect(self._on_dock_attach_changed)
 
     def closeEvent(self, event):
         self.closeRequested.emit()
@@ -32,3 +35,15 @@ class CustomDockWidget(QDockWidget):
         super().visibilityChanged(visible)
         if self.visibility_handler:
             self.visibility_handler(visible)
+
+    def _on_dock_attach_changed(self, floating: bool):
+        if floating:
+            min_size = self.widget().minimumSizeHint()
+            self.resize(min_size)
+
+            if not self.resizable:
+                self.setFixedSize(min_size)
+            else:
+                self.setMaximumSize(16777215, 16777215)
+        else:
+            self.setMaximumSize(16777215, 16777215)

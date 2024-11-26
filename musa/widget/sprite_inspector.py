@@ -4,7 +4,6 @@ from PyQt5.QtWidgets import (
     QFormLayout,
     QFrame,
     QHBoxLayout,
-    QLabel,
     QSlider,
     QSpinBox,
     QVBoxLayout,
@@ -44,9 +43,6 @@ class SpriteInspector(QWidget):
     def setup_ui(self):
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignTop)
-
-        self.name = QLabel("Inspector")
-        layout.addWidget(self.name)
 
         self.x_pos_spin = QSpinBox()
         self.x_pos_spin.setValue(0)
