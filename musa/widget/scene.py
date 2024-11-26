@@ -82,7 +82,7 @@ class EditorScene(QGraphicsScene):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setSceneRect(-self._SIZE / 2, -self._SIZE / 2, self._SIZE, self._SIZE)
-        self.selectionChanged.connect(self._on_selection_change)
+        self.selectionChanged.connect(self._on_selection_changed)
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasImage():

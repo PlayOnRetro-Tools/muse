@@ -13,8 +13,8 @@ from PyQt5.QtWidgets import (
 from musa.controller.animation_controller import AnimationController
 from musa.model.animation import AnimationsModel
 
-from .piece_inspector import PieceInspector
 from .playback_control import PlayBackWidget
+from .sprite_inspector import SpriteInspector
 
 
 class FrameListItem(QWidget):
@@ -167,7 +167,7 @@ class AnimationDock(QWidget):
         frame = animation.get_frame(self.frame_list.list.currentRow())
 
         piece = frame.get_piece(item.text())
-        self.piece_inspector.show_piece(piece)
+        self.piece_inspector.update_sprite(piece)
 
     def _on_add_animation(self, name: str):
         self.animation_list.add_item(name)
@@ -183,7 +183,7 @@ class AnimationDock(QWidget):
         self.animation_list = ListWidget("Animations")
         self.frame_list = ListWidget("Frames", allow_edit=False)
         self.piece_list = ListWidget("Pieces", True, False)
-        self.piece_inspector = PieceInspector()
+        self.piece_inspector = SpriteInspector()
         hbox_layout.addWidget(self.animation_list)
         hbox_layout.addWidget(self.frame_list)
         hbox_layout.addWidget(self.piece_list)

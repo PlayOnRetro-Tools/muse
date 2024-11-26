@@ -4,10 +4,11 @@ from PyQt5.QtWidgets import QHBoxLayout, QMainWindow, QWidget
 from musa.controller.animation_controller import AnimationController
 from musa.manager import DockConfig, DockManager
 from musa.model.animation import AnimationsModel
-from musa.widget.animation_dock import AnimationDock
 from musa.widget.event_filter import PanControl, ZoomControl
 from musa.widget.palette import SpritePaletteWidget
 from musa.widget.scene import EditorScene, EditorView
+
+from .animation_dock import AnimationDock
 
 
 class MusaMainWindow(QMainWindow):
@@ -16,9 +17,8 @@ class MusaMainWindow(QMainWindow):
         self.setMinimumSize(800, 600)
         self.setWindowTitle("M.U.S.E")
 
-        # Models
+        # Model
         self.animation_model = AnimationsModel()
-        self.animation_controller = AnimationController(self.animation_model)
 
         self.setup_ui()
 
@@ -47,7 +47,7 @@ class MusaMainWindow(QMainWindow):
             ),
         )
 
-        animation = AnimationDock(self.animation_model, self.animation_controller, self)
+        animation = AnimationDock(self.animation_model, self)
         self.docks.create_dock(
             "ANIMATION",
             DockConfig(
