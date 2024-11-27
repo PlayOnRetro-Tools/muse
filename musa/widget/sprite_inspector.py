@@ -3,13 +3,13 @@ from PyQt5.QtWidgets import (
     QCheckBox,
     QFormLayout,
     QHBoxLayout,
-    QSlider,
     QSpinBox,
     QVBoxLayout,
     QWidget,
 )
 
 from musa.model.sprite import Sprite
+from musa.widget.slider import FancySlider
 
 
 class SpriteInspector(QWidget):
@@ -21,23 +21,29 @@ class SpriteInspector(QWidget):
 
         self.setup_ui()
         self.set_sprite(None)
+        self.connections()
 
-        # Connections
-        self.x_pos_spin.valueChanged.connect(
-            lambda value: self.propertyChanged.emit("x", value)
-        )
-        self.y_pos_spin.valueChanged.connect(
-            lambda value: self.propertyChanged.emit("y", value)
-        )
-        self.hflip_check_box.stateChanged.connect(
-            lambda state: self.propertyChanged.emit("h_flip", state == Qt.Checked)
-        )
-        self.vflip_check_box.stateChanged.connect(
-            lambda state: self.propertyChanged.emit("h_flip", state == Qt.Checked)
-        )
-        self.opacity_slider.valueChanged.connect(
-            lambda value: self.propertyChanged.emit("opacity", value)
-        )
+    def connections(self):
+        self.x_pos_spin.valueChanged.connect(self._on_x_changed)
+        self.y_pos_spin.valueChanged.connect(self._on_y_changed)
+        self.hflip_check_box.stateChanged.connect(self._on_hflip_changed)
+        self.vflip_check_box.stateChanged.connect(self._on_vflip_changed)
+        self.alpha_slider.valueChanged.connect(self._on_opacity_changed)
+
+    def _on_x_changed(self, value: int):
+        self.current_sprite.x = value
+
+    def _on_y_changed(self, value: int):
+        self.current_sprite.y = value
+
+    def _on_hflip_changed(self, value: int):
+        self.current_sprite.h_flip = value == Qt.Checked
+
+    def _on_vflip_changed(self, value: int):
+        self.current_sprite.v_flip = value == Qt.Checked
+
+    def _on_opacity_changed(self, value: int):
+        self.current_sprite.alpha = value
 
     def setup_ui(self):
         layout = QVBoxLayout()
@@ -49,9 +55,9 @@ class SpriteInspector(QWidget):
         self.y_pos_spin.setValue(0)
         self.hflip_check_box = QCheckBox("Horizontal")
         self.vflip_check_box = QCheckBox("Vertical")
-        self.opacity_slider = QSlider(Qt.Horizontal)
-        self.opacity_slider.setRange(0, 100)
-        self.opacity_slider.setSingleStep(1)
+        self.alpha_slider = FancySlider()
+        self.alpha_slider.setRange(0, 100)
+        self.alpha_slider.setSingleStep(1)
 
         # Flip Container
         self.flip = QWidget()
@@ -65,7 +71,7 @@ class SpriteInspector(QWidget):
         form = QFormLayout()
         form.addRow("X:", self.x_pos_spin)
         form.addRow("Y:", self.y_pos_spin)
-        form.addRow("Opacity:", self.opacity_slider)
+        form.addRow("Alpha:", self.alpha_slider)
         form.addRow("Flip:", self.flip)
 
         layout.addLayout(form)
@@ -73,6 +79,7 @@ class SpriteInspector(QWidget):
 
     def set_sprite(self, sprite: Sprite):
         self.current_sprite = sprite
+
         if sprite is None:
             self.setEnabled(False)
             return
@@ -84,13 +91,16 @@ class SpriteInspector(QWidget):
         self.y_pos_spin.blockSignals(True)
         self.hflip_check_box.blockSignals(True)
         self.vflip_check_box.blockSignals(True)
+        self.alpha_slider.blockSignals(True)
 
         self.x_pos_spin.setValue(sprite.x)
         self.y_pos_spin.setValue(sprite.y)
         self.hflip_check_box.setChecked(sprite.h_flip)
         self.vflip_check_box.setChecked(sprite.v_flip)
+        self.alpha_slider.setValue(sprite.alpha)
 
         self.x_pos_spin.blockSignals(False)
         self.y_pos_spin.blockSignals(False)
         self.hflip_check_box.blockSignals(False)
         self.vflip_check_box.blockSignals(False)
+        self.alpha_slider.blockSignals(False)

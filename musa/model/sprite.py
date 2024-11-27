@@ -12,7 +12,7 @@ class Sprite(Serializable):
     v_flip: bool = False
     sprite_index: int = 0
     z_index: int = 0
-    opacity: float = 1.0
+    alpha: int = 0
     visible: bool = True
 
     def update(self, **kwargs) -> None:

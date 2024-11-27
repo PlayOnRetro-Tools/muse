@@ -118,16 +118,19 @@ class SpriteListWidget(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setup_ui()
-
         self.frame: Frame = None
         self.sprite_model = SpriteListModel(self.frame)
+
+        self.setup_ui()
+
         self.list.setModel(self.sprite_model)
         self.list.setItemDelegate(SpriteItemDelegate())
 
+        self.connections()
+
+    def connections(self):
         self.list.selectionModel().currentChanged.connect(self._on_sprite_selected)
 
-        # Buttons
         self.up_btn.clicked.connect(self._move_sprite_up)
         self.down_btn.clicked.connect(self._move_sprite_down)
         self.del_btn.clicked.connect(self._on_sprite_remove)
@@ -152,7 +155,8 @@ class SpriteListWidget(QWidget):
         self.down_btn.setFixedSize(32, 32)
         self.del_btn.setFixedSize(32, 32)
 
-        # Disable reorder buttons by default
+        # Disable buttons by default
+        self.del_btn.setEnabled(False)
         self.up_btn.setEnabled(False)
         self.down_btn.setEnabled(False)
 
@@ -171,23 +175,23 @@ class SpriteListWidget(QWidget):
         self.sprite_model.set_current_frame(self.frame)
 
     def _on_sprite_selected(self, current: QItemSelectionModel):
-        self._update_reorder_buttons(current)
+        self._update_buttons(current)
 
         if not current.isValid():
-            self.properties_widget.update_sprite(None)
+            self.spriteSelected.emit(None)
             return
 
         sprite = current.data(Qt.UserRole + 1)
         self.spriteSelected.emit(sprite)
 
-    def _update_reorder_buttons(self, current: QItemSelectionModel):
-        """Enable/disable reorder buttons based on current selection"""
+    def _update_buttons(self, current: QItemSelectionModel):
         enabled = current.isValid()
         row = current.row() if enabled else -1
         row_count = self.sprite_model.rowCount()
 
         self.up_btn.setEnabled(enabled and row > 0)
         self.down_btn.setEnabled(enabled and row < row_count - 1)
+        self.del_btn.setEnabled(enabled)
 
     def _move_sprite_up(self):
         current = self.list.currentIndex()
