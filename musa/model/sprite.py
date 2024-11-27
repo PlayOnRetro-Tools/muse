@@ -13,6 +13,7 @@ class Sprite(Serializable):
     sprite_index: int = 0
     z_index: int = 0
     opacity: float = 1.0
+    visible: bool = True
 
     def update(self, **kwargs) -> None:
         for key, value in kwargs.items():

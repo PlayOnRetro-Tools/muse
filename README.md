@@ -1,4 +1,4 @@
-# Musa - Multi Sprite Animation editor
+# MUSE - Multi Sprite Animation Editor
 
 A multi jointed sprite animation editor for the Megadrive.
 

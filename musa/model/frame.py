@@ -23,6 +23,7 @@ class Frame(Serializable):
 
     def add_sprite(self, sprite: Sprite) -> None:
         self.sprites.append(sprite)
+        self.sprites.sort(key=lambda s: s.z_index, reverse=True)
         self._modified = True
 
     def remove_sprite(self, sprite_id: UUID) -> Optional[Sprite]:
@@ -38,6 +39,16 @@ class Frame(Serializable):
                 self._modified = True
                 return True
         return False
+
+    def move_sprite(self, from_id: UUID, to_id: UUID):
+        origin = self.get_sprite(from_id)
+        dst = self.get_sprite(to_id)
+
+        origin.z_index, dst.z_index = dst.z_index, origin.z_index
+
+        # Higher z index first
+        self.sprites.sort(key=lambda s: s.z_index, reverse=True)
+        self._modified = True
 
     def get_sprite(self, sprite_id: UUID) -> Optional[Sprite]:
         return next((s for s in self.sprites if s.id == sprite_id), None)

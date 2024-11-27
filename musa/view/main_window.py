@@ -35,7 +35,6 @@ class MusaMainWindow(QMainWindow):
         ZoomControl(self.view)
         layout.addWidget(self.view)
 
-        # Sprite palette
         palette = SpritePaletteWidget()
         self.docks.create_dock(
             "PALETTE",
@@ -68,7 +67,7 @@ class MusaMainWindow(QMainWindow):
                 | Qt.RightDockWidgetArea
                 | Qt.LeftDockWidgetArea,
                 inspector,
-                resizable=False,
+                float_resizable=False,
             ),
         )
 

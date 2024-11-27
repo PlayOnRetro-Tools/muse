@@ -9,10 +9,12 @@ from musa.view import MusaMainWindow as Win
 
 def main():
     QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
+
     app = QApplication(sys.argv)
     styles.dark(app)
 
     window = Win()
+
     desktop = QApplication.desktop().screenGeometry(0)
     window.move(desktop.left(), desktop.top())
     window.showMaximized()

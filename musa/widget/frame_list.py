@@ -1,7 +1,14 @@
 from typing import Any, List, Optional
 from uuid import UUID
 
-from PyQt5.QtCore import QAbstractListModel, QModelIndex, QSize, Qt, pyqtSignal
+from PyQt5.QtCore import (
+    QAbstractListModel,
+    QItemSelectionModel,
+    QModelIndex,
+    QSize,
+    Qt,
+    pyqtSignal,
+)
 from PyQt5.QtWidgets import (
     QHBoxLayout,
     QLabel,
@@ -16,6 +23,7 @@ from PyQt5.QtWidgets import (
 
 from musa.model.animation import Animation
 from musa.model.frame import Frame
+from musa.model.sprite import Sprite
 
 
 class FrameListModel(QAbstractListModel):
@@ -147,6 +155,8 @@ class FrameItemDelegate(QStyledItemDelegate):
 
 
 class FrameListWidget(QWidget):
+    frameSelected = pyqtSignal(Frame)
+
     def __init__(self, animation: Animation = None, parent=None):
         super().__init__(parent)
         self.setup_ui()
@@ -163,11 +173,7 @@ class FrameListWidget(QWidget):
         # connections
         self.add_btn.clicked.connect(self._on_frame_add)
         self.del_btn.clicked.connect(self._on_frame_remove)
-
-    def set_animation(self, animation: Animation):
-        self.animation = animation
-        self.frame_model.set_current_animation(self.animation)
-        self.add_btn.setEnabled(True)
+        self.list.selectionModel().currentChanged.connect(self._on_frame_selected)
 
     def setup_ui(self):
         layout = QVBoxLayout()
@@ -198,10 +204,28 @@ class FrameListWidget(QWidget):
 
         self.setLayout(layout)
 
+    def set_animation(self, animation: Animation):
+        self.animation = animation
+        self.frame_model.set_current_animation(self.animation)
+        self.add_btn.setEnabled(True)
+
+    def _on_frame_selected(self, current: QItemSelectionModel, previous):
+        index = current.row() if current.isValid() else -1
+        id = self.frame_model.frames[index]
+        frame = self.animation.get_frame(id)
+        self.frameSelected.emit(frame)
+
     def _on_frame_add(self):
         base_name = self.animation.name
         index = len(self.animation.frames)
         dummy = Frame(name=f"{base_name.upper()} {index}")
+
+        dummy.add_sprite(Sprite(name="HAND_0", z_index=0))
+        dummy.add_sprite(Sprite(name="LEG_1", z_index=1))
+        dummy.add_sprite(Sprite(name="HEAD_4", z_index=2))
+        dummy.add_sprite(Sprite(name="TORSO_3", z_index=3))
+        dummy.add_sprite(Sprite(name="FOOT_2", z_index=4))
+
         self.animation.add_frame(dummy)
 
     def _on_frame_remove(self):

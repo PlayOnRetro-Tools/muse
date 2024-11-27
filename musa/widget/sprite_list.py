@@ -1,4 +1,14 @@
-from PyQt5.QtCore import QAbstractListModel, QModelIndex, QSize, Qt, pyqtSignal
+from typing import Any, List
+from uuid import UUID
+
+from PyQt5.QtCore import (
+    QAbstractListModel,
+    QItemSelectionModel,
+    QModelIndex,
+    QSize,
+    Qt,
+    pyqtSignal,
+)
 from PyQt5.QtWidgets import (
     QHBoxLayout,
     QLabel,
@@ -10,77 +20,67 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
-from musa.model.animation_collection import AnimationCollection
 from musa.model.frame import Frame
 from musa.model.sprite import Sprite
 
 
 class SpriteListModel(QAbstractListModel):
-    def __init__(self, data_model: AnimationCollection, parent=None):
+    def __init__(self, frame: Frame, parent=None):
         super().__init__(parent)
-        self.data_model = data_model
-        self.current_animation = -1
-        self.current_frame = -1
+        self.frame = frame
+        self.sprites: List[UUID] = []
 
-    def rowCount(self, parent=QModelIndex()):
-        return 0
-        if self.current_animation < 0 or self.current_frame < 0:
-            return 0
+    def _refresh_sprite_list(self):
+        self.sprites = [s.id for s in self.frame.sprites]
 
-    def data(self, index, role=Qt.DisplayRole):
-        if not index.isValid() or self.current_animation < 0 or self.current_frame < 0:
+    def rowCount(self, parent: QModelIndex = QModelIndex()):
+        return len(self.sprites)
+
+    def data(self, index: QModelIndex, role: int = Qt.DisplayRole):
+        if not index.isValid() or not 0 <= index.row() < len(self.sprites):
             return None
 
-        sprite = self.data_model.get_sprites(
-            self.current_animation, self.current_frame
-        )[index.row()]
+        sprite = self.frame.get_sprite(self.sprites[index.row()])
 
         if role == Qt.DisplayRole:
             return sprite.name
-        elif role == Qt.UserRole:  # Use UserRole to store visibility
+        elif role == Qt.UserRole:
             return sprite.visible
-        elif role == Qt.UserRole + 1:  # Store the entire sprite object
-            return sprite
+        elif role == Qt.UserRole + 1:
+            return sprite  # Store the sprite object
 
         return None
 
-    def setData(self, index, value, role=Qt.EditRole):
-        if not index.isValid() or self.current_animation < 0 or self.current_frame < 0:
+    def setData(self, index: QModelIndex, value: Any, role: int = Qt.EditRole):
+        if not index.isValid() or not 0 <= index.row() < len(self.sprites):
             return False
 
         if role == Qt.UserRole:  # For visibility updates
-            self.data_model.set_sprite_visibility(
-                self.current_animation, self.current_frame, index.row(), value
-            )
+            id = self.sprites[index.row()]
+            self.frame.get_sprite(id).visible = value
+
             self.dataChanged.emit(index, index, [role])
             return True
 
         return False
 
-    def move_sprite(self, from_index, to_index):
-        """Move sprite in the z-order"""
-        if from_index < 0 or to_index < 0:
-            return False
+    def move_sprite(self, from_index: int, to_index: int):
+        self.frame.move_sprite(self.sprites[from_index], self.sprites[to_index])
 
-        success = self.data_model.move_sprite(
-            self.current_animation, self.current_frame, from_index, to_index
-        )
-
-        if success:
-            self.beginResetModel()  # Reset model to reflect new order
-            self.endResetModel()
-        return success
-
-    def set_current_frame(self, animation_index, frame_index):
         self.beginResetModel()
-        self.current_animation = animation_index
-        self.current_frame = frame_index
+        self._refresh_sprite_list()
+        self.endResetModel()
+
+    def set_current_frame(self, frame: Frame):
+        self.beginResetModel()
+        self.frame = frame
+        self._refresh_sprite_list()
         self.endResetModel()
 
 
 class SpriteItemDelegate(QStyledItemDelegate):
     def sizeHint(self, option, index):
-        return QSize(200, 40)
+        return QSize(150, 30)
 
     def paint(self, painter, option, index):
         if option.state & QStyle.State_Selected:
@@ -113,14 +113,14 @@ class SpriteItemDelegate(QStyledItemDelegate):
 
 
 class SpriteListWidget(QWidget):
-    spriteSelected = pyqtSignal(object)
+    spriteSelected = pyqtSignal(Sprite)
 
-    def __init__(self, frame=None, parent=None):
+    def __init__(self, frame: Frame = None, parent=None):
         super().__init__(parent)
         self.setup_ui()
 
-        self.data_model = frame
-        self.sprite_model = SpriteListModel(self.data_model)
+        self.frame = frame
+        self.sprite_model = SpriteListModel(self.frame)
         self.list.setModel(self.sprite_model)
         self.list.setItemDelegate(SpriteItemDelegate())
 
@@ -169,7 +169,11 @@ class SpriteListWidget(QWidget):
 
         self.setLayout(layout)
 
-    def _on_sprite_selected(self, current, previous):
+    def set_frame(self, frame: Frame):
+        self.frame = frame
+        self.sprite_model.set_current_frame(self.frame)
+
+    def _on_sprite_selected(self, current: QItemSelectionModel):
         self._update_reorder_buttons(current)
 
         if not current.isValid():
@@ -179,7 +183,7 @@ class SpriteListWidget(QWidget):
         sprite = current.data(Qt.UserRole + 1)
         self.spriteSelected.emit(sprite)
 
-    def _update_reorder_buttons(self, current):
+    def _update_reorder_buttons(self, current: QItemSelectionModel):
         """Enable/disable reorder buttons based on current selection"""
         enabled = current.isValid()
         row = current.row() if enabled else -1
@@ -194,7 +198,7 @@ class SpriteListWidget(QWidget):
             return
 
         self.sprite_model.move_sprite(current.row(), current.row() - 1)
-        self.sprites_view.setCurrentIndex(self.sprite_model.index(current.row() - 1, 0))
+        self.list.setCurrentIndex(self.sprite_model.index(current.row() - 1, 0))
 
     def _move_sprite_down(self):
         current = self.list.currentIndex()
@@ -202,7 +206,7 @@ class SpriteListWidget(QWidget):
             return
 
         self.sprite_model.move_sprite(current.row(), current.row() + 1)
-        self.sprites_view.setCurrentIndex(self.sprite_model.index(current.row() + 1, 0))
+        self.list.setCurrentIndex(self.sprite_model.index(current.row() + 1, 0))
 
     def _on_sprite_remove(self):
         pass
