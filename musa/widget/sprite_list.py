@@ -10,6 +10,7 @@ from PyQt5.QtCore import (
     pyqtSignal,
 )
 from PyQt5.QtWidgets import (
+    QGroupBox,
     QHBoxLayout,
     QLabel,
     QListView,
@@ -115,11 +116,11 @@ class SpriteItemDelegate(QStyledItemDelegate):
 class SpriteListWidget(QWidget):
     spriteSelected = pyqtSignal(Sprite)
 
-    def __init__(self, frame: Frame = None, parent=None):
+    def __init__(self, parent=None):
         super().__init__(parent)
         self.setup_ui()
 
-        self.frame = frame
+        self.frame: Frame = None
         self.sprite_model = SpriteListModel(self.frame)
         self.list.setModel(self.sprite_model)
         self.list.setItemDelegate(SpriteItemDelegate())
@@ -133,17 +134,17 @@ class SpriteListWidget(QWidget):
 
     def setup_ui(self):
         layout = QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
 
-        title_lay = QHBoxLayout()
-        self.title = QLabel("Sprites")
-        title_lay.addWidget(self.title)
+        sprite_group = QGroupBox("Sprites")
+        sprite_group_lay = QHBoxLayout()
 
-        list_lay = QVBoxLayout()
         self.list = QListView()
-        list_lay.addWidget(self.list)
+        sprite_group_lay.addWidget(self.list)
 
         btn_layout = QVBoxLayout()
         btn_layout.setAlignment(Qt.AlignTop)
+
         self.up_btn = QPushButton("↑")
         self.down_btn = QPushButton("↓")
         self.del_btn = QPushButton("-")
@@ -160,13 +161,9 @@ class SpriteListWidget(QWidget):
         btn_layout.addWidget(self.up_btn)
         btn_layout.addWidget(self.down_btn)
 
-        hbox = QHBoxLayout()
-        hbox.addLayout(list_lay)
-        hbox.addLayout(btn_layout)
-
-        layout.addLayout(title_lay)
-        layout.addLayout(hbox)
-
+        sprite_group_lay.addLayout(btn_layout)
+        sprite_group.setLayout(sprite_group_lay)
+        layout.addWidget(sprite_group)
         self.setLayout(layout)
 
     def set_frame(self, frame: Frame):

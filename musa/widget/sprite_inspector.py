@@ -2,7 +2,6 @@ from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import (
     QCheckBox,
     QFormLayout,
-    QFrame,
     QHBoxLayout,
     QSlider,
     QSpinBox,
@@ -68,11 +67,8 @@ class SpriteInspector(QWidget):
         form.addRow("Y:", self.y_pos_spin)
         form.addRow("Opacity:", self.opacity_slider)
         form.addRow("Flip:", self.flip)
-        container = QFrame()
-        container.setFrameStyle(QFrame.StyledPanel)
-        container.setLayout(form)
 
-        layout.addWidget(container)
+        layout.addLayout(form)
         self.setLayout(layout)
 
     def set_sprite(self, sprite: Sprite):
