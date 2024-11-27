@@ -9,11 +9,11 @@ PY_RESOURCES := $(QRC_FILES:$(QRC_DIR)/%.qrc=musa/resources/%.py)
 
 help:
 	@echo "Available tagets:"
-	@echo " install		- Install project dependencies"
+	@echo " install	- Install project dependencies"
 	@echo " clean		- Remove build artifacts and cached files"
 	@echo " build		- Build the application"
 	@echo " run 		- Run the application locally"
-	@echo "	lint 		- Format the code"
+	@echo " lint		- Format the code"
 	@echo " resources 	- Compile .qrc files to python"
 	@echo " test 		- Run tests"
 	@echo " dist 		- Create distributable package"

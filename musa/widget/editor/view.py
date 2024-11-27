@@ -1,12 +1,12 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPainter
-from PyQt5.QtWidgets import QFrame, QGraphicsView, QSizePolicy
+from PyQt5.QtWidgets import QFrame, QGraphicsScene, QGraphicsView, QSizePolicy
 
 from .grid import EditorGrid
 
 
 class EditorView(QGraphicsView):
-    def __init__(self, scene, parent=None):
+    def __init__(self, scene: QGraphicsScene, parent=None):
         super().__init__(scene, parent)
         self.setAcceptDrops(True)
 
@@ -26,4 +26,3 @@ class EditorView(QGraphicsView):
         self.setDragMode(QGraphicsView.RubberBandDrag)
 
         self.grid = EditorGrid(self)
-        self.setEnabled(False)

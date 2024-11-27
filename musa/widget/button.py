@@ -1,4 +1,4 @@
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import QSize, Qt
 from PyQt5.QtGui import QBrush, QColor, QIcon, QLinearGradient, QPainter, QPixmap
 from PyQt5.QtWidgets import QPushButton
 
@@ -39,3 +39,25 @@ class AlphaColorPickerButton(QPushButton):
     def set_color(self, color: QColor):
         self.color = color
         self.update_color()
+
+
+class IconButton(QPushButton):
+    def __init__(self, icon: QIcon, parent=None):
+        super().__init__(icon=icon, parent=parent)
+        icon_size = icon.actualSize(QSize(512, 512))
+        self.setIconSize(icon_size)
+        self.setFixedSize(icon_size.width(), icon_size.height())
+
+        self.setFlat(True)
+        self.setStyleSheet(
+            """
+            QPushButton {
+                border: None;
+                background-color: transparent;
+            }
+             QPushButton:hover {
+                background-color: rgba(200, 200, 200, 10);
+                border-radius: 4px;
+            }
+        """
+        )

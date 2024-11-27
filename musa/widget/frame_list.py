@@ -13,7 +13,6 @@ from PyQt5.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QListView,
-    QPushButton,
     QSpinBox,
     QStyle,
     QStyledItemDelegate,
@@ -21,9 +20,11 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
+from musa.manager import ResourceManager
 from musa.model.animation import Animation
 from musa.model.frame import Frame
 from musa.model.sprite import Sprite
+from musa.widget.button import IconButton
 
 
 class FrameListModel(QAbstractListModel):
@@ -188,10 +189,8 @@ class FrameListWidget(QWidget):
 
         btn_layout = QVBoxLayout()
         btn_layout.setAlignment(Qt.AlignTop)
-        self.add_btn = QPushButton("+")
-        self.del_btn = QPushButton("-")
-        self.add_btn.setFixedSize(32, 32)
-        self.del_btn.setFixedSize(32, 32)
+        self.add_btn = IconButton(ResourceManager.get_icon("file_add"))
+        self.del_btn = IconButton(ResourceManager.get_icon("delete_bin"))
         btn_layout.addWidget(self.add_btn)
         btn_layout.addWidget(self.del_btn)
 

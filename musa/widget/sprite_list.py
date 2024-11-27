@@ -21,8 +21,10 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
+from musa.manager import ResourceManager
 from musa.model.frame import Frame
 from musa.model.sprite import Sprite
+from musa.widget.button import IconButton
 
 
 class SpriteListModel(QAbstractListModel):
@@ -148,12 +150,9 @@ class SpriteListWidget(QWidget):
         btn_layout = QVBoxLayout()
         btn_layout.setAlignment(Qt.AlignTop)
 
-        self.up_btn = QPushButton("↑")
-        self.down_btn = QPushButton("↓")
-        self.del_btn = QPushButton("-")
-        self.up_btn.setFixedSize(32, 32)
-        self.down_btn.setFixedSize(32, 32)
-        self.del_btn.setFixedSize(32, 32)
+        self.up_btn = IconButton(ResourceManager.get_icon("arrow_up"))
+        self.down_btn = IconButton(ResourceManager.get_icon("arrow_down"))
+        self.del_btn = IconButton(ResourceManager.get_icon("delete_bin"))
 
         # Disable buttons by default
         self.del_btn.setEnabled(False)

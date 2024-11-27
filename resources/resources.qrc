@@ -1,5 +1,20 @@
 <!DOCTYPE RCC>
 <RCC version="1.0">
-    <qresource prefix="/">
+    <qresource prefix="icons">
+        <file alias="arrow_down">icons/arrow-down-box-fill.png</file>
+        <file alias="arrow_go_back">icons/arrow-go-back-fill.png</file>
+        <file alias="arrow_go_forward">icons/arrow-go-forward-fill.png</file>
+        <file alias="arrow_up">icons/arrow-up-box-fill.png</file>
+        <file alias="delete_bin">icons/delete-bin-5-fill.png</file>
+        <file alias="drag-move">icons/drag-move-fill.png</file>
+        <file alias="dropper">icons/dropper-fill.png</file>
+        <file alias="edit">icons/edit-2-fill.png</file>
+        <file alias="eye">icons/eye-fill.png</file>
+        <file alias="eye_off">icons/eye-off-fill.png</file>
+        <file alias="file">icons/file-2-fill.png</file>
+        <file alias="file_add">icons/file-add-fill.png</file>
+        <file alias="settings">icons/settings-2-fill.png</file>
+        <file alias="sip">icons/sip-fill.png</file>
+        <file alias="sip_line">icons/sip-line.png</file>
     </qresource>
 </RCC>

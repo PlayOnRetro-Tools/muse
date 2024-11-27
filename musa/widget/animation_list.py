@@ -13,15 +13,16 @@ from PyQt5.QtWidgets import (
     QLabel,
     QLineEdit,
     QListView,
-    QPushButton,
     QStyledItemDelegate,
     QVBoxLayout,
     QWidget,
 )
 
 from musa.dialog import FileDialogFactory
+from musa.manager import ResourceManager
 from musa.model.animation import Animation
 from musa.model.animation_collection import AnimationCollection
+from musa.widget.button import IconButton
 
 
 class AnimationItemDelegate(QStyledItemDelegate):
@@ -152,10 +153,8 @@ class AnimationListWidget(QWidget):
 
         btn_layout = QVBoxLayout()
         btn_layout.setAlignment(Qt.AlignTop)
-        self.add_btn = QPushButton("+")
-        self.del_btn = QPushButton("-")
-        self.add_btn.setFixedSize(32, 32)
-        self.del_btn.setFixedSize(32, 32)
+        self.add_btn = IconButton(ResourceManager.get_icon("file_add"))
+        self.del_btn = IconButton(ResourceManager.get_icon("delete_bin"))
         btn_layout.addWidget(self.add_btn)
         btn_layout.addWidget(self.del_btn)
 
