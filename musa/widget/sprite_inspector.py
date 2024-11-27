@@ -69,9 +69,9 @@ class SpriteInspector(QWidget):
         self.flip.setLayout(hbox)
 
         form = QFormLayout()
+        form.addRow("Alpha:", self.alpha_slider)
         form.addRow("X:", self.x_pos_spin)
         form.addRow("Y:", self.y_pos_spin)
-        form.addRow("Alpha:", self.alpha_slider)
         form.addRow("Flip:", self.flip)
 
         layout.addLayout(form)

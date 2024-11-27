@@ -3,9 +3,9 @@ from PyQt5.QtWidgets import QHBoxLayout, QMainWindow, QWidget
 
 from musa.manager import DockConfig, DockManager
 from musa.model.animation_collection import AnimationCollection
+from musa.widget.editor import EditorScene, EditorView
 from musa.widget.event_filter import PanControl, ZoomControl
 from musa.widget.palette import SpritePaletteWidget
-from musa.widget.scene import EditorScene, EditorView
 
 from .animation_dock import AnimationDock
 from .inspector_dock import InspectorDock
@@ -25,6 +25,13 @@ class MusaMainWindow(QMainWindow):
 
     def connections(self):
         self.animation.frameSelected.connect(self.inspector.set_frame)
+        self.animation.frameSelected.connect(self.scene.set_frame)
+        self.animation.animationSelected.connect(self.scene.set_animation)
+
+        # Enable editing when a new animation is created
+        self.animation_collection.signals.animationAdded.connect(
+            lambda x: self.editor_view.setEnabled(True)
+        )
 
     def setup_ui(self):
         content = QWidget()
@@ -32,12 +39,12 @@ class MusaMainWindow(QMainWindow):
 
         self.docks = DockManager(self)
 
-        # Editor view
+        # Main editor
         self.scene = EditorScene()
-        self.view = EditorView(self.scene)
-        PanControl(self.view)
-        ZoomControl(self.view)
-        layout.addWidget(self.view)
+        self.editor_view = EditorView(self.scene)
+        PanControl(self.editor_view)
+        ZoomControl(self.editor_view)
+        layout.addWidget(self.editor_view)
 
         palette = SpritePaletteWidget()
         self.docks.create_dock(

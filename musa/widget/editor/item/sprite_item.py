@@ -1,13 +1,28 @@
+from uuid import UUID
+
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QGraphicsPixmapItem
 
 
 class SpriteItem(QGraphicsPixmapItem):
-    def __init__(self, pixmap: QPixmap, parent=None):
+    def __init__(self, pixmap: QPixmap, sprite_id: UUID, parent=None):
         super().__init__(pixmap, parent)
+        self.sprite_id = sprite_id
+
         self.setFlag(QGraphicsPixmapItem.ItemIsMovable)
         self.setFlag(QGraphicsPixmapItem.ItemIsSelectable)
+
+    def update_model(self):
+        # Change x,y
+        pass
+
+    def update_from_model(self):
+        pass
+
+    def itemChange(self, change, value):
+        self.update_model()
+        return super().itemChange(change, value)
 
     def mouseReleaseEvent(self, event):
         super().mouseReleaseEvent(event)
