@@ -16,7 +16,10 @@ class MusaMainWindow(QMainWindow):
         self.setMinimumSize(800, 600)
         self.setWindowTitle("M.U.S.E")
 
-        # Model
+        # Managers
+        self.dock_manager = DockManager(self)
+
+        # Main document model
         self.animation_collection = AnimationCollection()
 
         self.setup_ui()
@@ -33,23 +36,23 @@ class MusaMainWindow(QMainWindow):
         )
 
     def setup_ui(self):
-        self.docks = DockManager(self)
-
         self.editor = EditorWidget()
+        self.setCentralWidget(self.editor)
+        self.palette = SpritePaletteWidget()
+        self.animation = AnimationDock(self.animation_collection, self)
+        self.inspector = InspectorDock()
 
-        palette = SpritePaletteWidget()
-        self.docks.create_dock(
+        self.dock_manager.create_dock(
             "PALETTE",
             DockConfig(
                 "Sprite Palette",
                 Qt.RightDockWidgetArea,
                 Qt.RightDockWidgetArea | Qt.LeftDockWidgetArea,
-                palette,
+                self.palette,
             ),
         )
 
-        self.animation = AnimationDock(self.animation_collection, self)
-        self.docks.create_dock(
+        self.dock_manager.create_dock(
             "ANIMATION",
             DockConfig(
                 "Animation",
@@ -59,8 +62,7 @@ class MusaMainWindow(QMainWindow):
             ),
         )
 
-        self.inspector = InspectorDock()
-        self.docks.create_dock(
+        self.dock_manager.create_dock(
             "INSPECTOR",
             DockConfig(
                 "Inspector",
@@ -69,5 +71,3 @@ class MusaMainWindow(QMainWindow):
                 self.inspector,
             ),
         )
-
-        self.setCentralWidget(self.editor)
