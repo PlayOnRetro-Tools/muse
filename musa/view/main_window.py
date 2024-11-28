@@ -1,4 +1,3 @@
-from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QMainWindow
 
 from musa.manager import DockConfig, DockManager
@@ -46,8 +45,8 @@ class MusaMainWindow(QMainWindow):
             "PALETTE",
             DockConfig(
                 "Sprite Palette",
-                Qt.RightDockWidgetArea,
-                Qt.RightDockWidgetArea | Qt.LeftDockWidgetArea,
+                DockConfig.Area.RIGHT,
+                DockConfig.Area.LEFT | DockConfig.Area.RIGHT,
                 self.palette,
             ),
         )
@@ -56,8 +55,8 @@ class MusaMainWindow(QMainWindow):
             "ANIMATION",
             DockConfig(
                 "Animation",
-                Qt.BottomDockWidgetArea,
-                Qt.BottomDockWidgetArea | Qt.TopDockWidgetArea,
+                DockConfig.Area.BOTTOM,
+                DockConfig.Area.BOTTOM | DockConfig.Area.TOP,
                 self.animation,
             ),
         )
@@ -66,8 +65,8 @@ class MusaMainWindow(QMainWindow):
             "INSPECTOR",
             DockConfig(
                 "Inspector",
-                Qt.RightDockWidgetArea,
-                Qt.RightDockWidgetArea | Qt.LeftDockWidgetArea,
+                DockConfig.Area.RIGHT,
+                DockConfig.Area.LEFT | DockConfig.Area.RIGHT,
                 self.inspector,
             ),
         )

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from enum import Enum
 from typing import Callable, Dict, Optional, Type
 
 from PyQt5.QtCore import Qt
@@ -18,11 +19,21 @@ from musa.widget.dock import CustomDockWidget, DockCloseAction
 
 @dataclass
 class DockConfig:
+    class Area(Enum):
+        LEFT = Qt.LeftDockWidgetArea
+        RIGHT = Qt.RightDockWidgetArea
+        TOP = Qt.TopDockWidgetArea
+        BOTTOM = Qt.BottomDockWidgetArea
+        ALL = Qt.AllDockWidgetAreas
+
+        def __or__(self, other):
+            return self.value | other.value
+
     """Configuration for a dock widget"""
 
     title: str
-    area: Qt.DockWidgetArea = Qt.LeftDockWidgetArea
-    allowed_areas: Qt.DockWidgetAreas = Qt.AllDockWidgetAreas
+    area: Area = Area.LEFT
+    allowed_areas: Area = Area.ALL
     widget: Optional[QWidget] = None
     widget_class: Optional[Type[QWidget]] = None
     floating: bool = False
@@ -67,7 +78,11 @@ class DockManager:
         dock.setFeatures(features)
 
         # Set allowed areas
-        dock.setAllowedAreas(config.allowed_areas)
+        dock.setAllowedAreas(
+            config.allowed_areas
+            if not config.allowed_areas in DockConfig.Area
+            else config.allowed_areas.value
+        )
 
         # Create and set the widget
         if config.widget:
@@ -86,7 +101,7 @@ class DockManager:
         dock.closeRequested.connect(lambda: self._handle_dock_close(dock_id))
 
         # Add dock to main window
-        self.main_window.addDockWidget(config.area, dock)
+        self.main_window.addDockWidget(config.area.value, dock)
         dock.setFloating(config.floating)
 
         if self.view_menu and config.add_view:
