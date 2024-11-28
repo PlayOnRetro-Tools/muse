@@ -13,7 +13,6 @@ from PyQt5.QtWidgets import (
     QLineEdit,
     QMessageBox,
     QPushButton,
-    QSlider,
     QSpinBox,
     QVBoxLayout,
 )
@@ -21,6 +20,7 @@ from PyQt5.QtWidgets import (
 from musa.model.types import Point, Size
 from musa.util.image import Image
 from musa.widget.button import AlphaColorPickerButton
+from musa.widget.slider import RoundHandleSlider
 from musa.widget.viewer import ScrollImageViewer
 
 
@@ -55,7 +55,7 @@ class SpriteSheetDialog(QDialog):
 
         # Zoom level
         control_layout.addWidget(QLabel("Zoom:"))
-        self.zoom_slider = QSlider(Qt.Horizontal)
+        self.zoom_slider = RoundHandleSlider(Qt.Horizontal)
         self.zoom_slider.setMinimumWidth(200)
         self.zoom_slider.setMinimum(10)
         self.zoom_slider.setMaximum(50)

@@ -16,5 +16,8 @@
         <file alias="settings">icons/settings-2-fill.png</file>
         <file alias="sip">icons/sip-fill.png</file>
         <file alias="sip_line">icons/sip-line.png</file>
+        <file alias="muse_32">icons/muse_32.png</file>
+        <file alias="muse_64">icons/muse_64.png</file>
+        <file alias="muse_128">icons/muse_128.png</file>
     </qresource>
 </RCC>

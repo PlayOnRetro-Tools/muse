@@ -56,7 +56,7 @@ class IconButton(QPushButton):
                 background-color: transparent;
             }
              QPushButton:hover {
-                background-color: rgba(200, 200, 200, 10);
+                background-color: rgba(220, 220, 220, 20);
                 border-radius: 4px;
             }
         """

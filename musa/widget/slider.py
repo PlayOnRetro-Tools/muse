@@ -1,10 +1,183 @@
+from enum import Enum, auto
 from typing import Optional
 
-from PyQt5.QtCore import Qt, pyqtProperty, pyqtSignal, pyqtSlot
-from PyQt5.QtWidgets import QFrame, QHBoxLayout, QLabel, QSlider, QWidget
+from PyQt5.QtCore import QRectF, QSize, Qt, pyqtProperty, pyqtSignal, pyqtSlot
+from PyQt5.QtGui import QBrush, QColor, QLinearGradient, QPainter, QPen
+from PyQt5.QtWidgets import (
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QSlider,
+    QStyle,
+    QStyleOptionSlider,
+    QWidget,
+)
+
+from musa.util.image import Image
 
 
-class FancySlider(QWidget):
+class RoundHandleSlider(QSlider):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.handle_diameter = 12
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+
+        opt = QStyleOptionSlider()
+        self.initStyleOption(opt)
+
+        # Get the style
+        style = self.style()
+
+        # Draw the groove
+        radius = self.handle_diameter // 2
+        groove_rect = style.subControlRect(
+            QStyle.CC_Slider, opt, QStyle.SC_SliderGroove, self
+        ).adjusted(radius, 0, -radius, 0)
+
+        opt.subControls = QStyle.SC_SliderGroove
+        opt.rect = groove_rect
+        style.drawComplexControl(QStyle.CC_Slider, opt, painter, self)
+
+        # Compute handle rect
+        handle_rect = self.style().subControlRect(
+            QStyle.CC_Slider, opt, QStyle.SC_SliderHandle, self
+        )
+
+        center_x = handle_rect.center().x()
+        center_y = handle_rect.center().y()
+
+        # Create circle rect
+        circle_rect = QRectF(
+            center_x - self.handle_diameter / 2,
+            center_y - self.handle_diameter / 2,
+            self.handle_diameter,
+            self.handle_diameter,
+        )
+
+        # Draw the Handle
+        painter.setPen(QPen(Qt.darkGray, 1))
+        painter.setBrush(QBrush(QColor(220, 220, 220)))
+        painter.drawEllipse(circle_rect)
+
+
+class ColorChannelSlider(QSlider):
+    def __init__(self, channel, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.channel = channel
+        self.setMinimum(0)
+        self.setMaximum(255)
+
+        self.handle_diameter = 12
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        opt = QStyleOptionSlider()
+        self.initStyleOption(opt)
+
+        # Gradient
+        radius = self.handle_diameter // 2
+        groove_rect = (
+            self.style()
+            .subControlRect(QStyle.CC_Slider, opt, QStyle.SC_SliderGroove, self)
+            .adjusted(radius, 0, -radius, 0)
+        )
+        gradient = QLinearGradient(groove_rect.left(), 0, groove_rect.right(), 0)
+
+        # Set Colors based on channel
+        if self.channel == "r":
+            gradient.setColorAt(0, QColor(0, 0, 0))
+            gradient.setColorAt(1, QColor(255, 0, 0))
+        elif self.channel == "g":
+            gradient.setColorAt(0, QColor(0, 0, 0))
+            gradient.setColorAt(1, QColor(0, 255, 0))
+        elif self.channel == "b":
+            gradient.setColorAt(0, QColor(0, 0, 0))
+            gradient.setColorAt(1, QColor(0, 0, 255))
+
+        painter.setPen(QPen(Qt.black, 1))
+        painter.fillRect(groove_rect, gradient)
+
+        # Compute handle rect
+        handle_rect = self.style().subControlRect(
+            QStyle.CC_Slider, opt, QStyle.SC_SliderHandle, self
+        )
+
+        center_x = handle_rect.center().x()
+        center_y = handle_rect.center().y()
+
+        # Create circle rect
+        circle_rect = QRectF(
+            center_x - self.handle_diameter / 2,
+            center_y - self.handle_diameter / 2,
+            self.handle_diameter,
+            self.handle_diameter,
+        )
+
+        # Draw the Handle
+        painter.setPen(QPen(Qt.darkGray, 1))
+        painter.setBrush(QBrush(QColor(220, 220, 220)))
+        painter.drawEllipse(circle_rect)
+
+
+class OpacitySlider(QSlider):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setMinimum(0)
+        self.setMaximum(255)
+
+        self.handle_diameter = 12
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        opt = QStyleOptionSlider()
+        self.initStyleOption(opt)
+
+        # Create checkedboard pattern
+        radius = self.handle_diameter // 2
+        groove_rect = (
+            self.style()
+            .subControlRect(QStyle.CC_Slider, opt, QStyle.SC_SliderGroove, self)
+            .adjusted(radius, 0, -radius, 0)
+        )
+
+        check = Image.checker_board(QSize(groove_rect.width(), groove_rect.height()), 2)
+        painter.drawPixmap(groove_rect, check)
+
+        # Opacity gradient
+        gradient = QLinearGradient(groove_rect.left(), 0, groove_rect.right(), 0)
+        gradient.setColorAt(0, QColor(42, 130, 218, 255))
+        gradient.setColorAt(1, QColor(42, 130, 218, 0))
+        painter.setPen(QPen(Qt.black, 1))
+        painter.fillRect(groove_rect, gradient)
+
+        # Compute handle rect
+        handle_rect = self.style().subControlRect(
+            QStyle.CC_Slider, opt, QStyle.SC_SliderHandle, self
+        )
+
+        center_x = handle_rect.center().x()
+        center_y = handle_rect.center().y()
+
+        # Create circle rect
+        circle_rect = QRectF(
+            center_x - self.handle_diameter / 2,
+            center_y - self.handle_diameter / 2,
+            self.handle_diameter,
+            self.handle_diameter,
+        )
+
+        # Draw the Handle
+        painter.setPen(QPen(Qt.darkGray, 1))
+        painter.setBrush(QBrush(QColor(220, 220, 220)))
+        painter.drawEllipse(circle_rect)
+
+
+class ValueSlider(QWidget):
     actionTriggered = pyqtSignal(int)
     rangeChanged = pyqtSignal(int, int)
     sliderMoved = pyqtSignal(int)
@@ -12,10 +185,34 @@ class FancySlider(QWidget):
     sliderReleased = pyqtSignal()
     valueChanged = pyqtSignal(int)
 
-    def __init__(self, parent: Optional[QWidget] = None) -> None:
+    class Type(Enum):
+        NORMAL = auto()
+        RED = auto()
+        GREEN = auto()
+        BLUE = auto()
+        ALPHA = auto()
+
+    def __init__(
+        self,
+        slider_type: Type = Type.NORMAL,
+        parent: Optional[QWidget] = None,
+    ) -> None:
         super().__init__(parent)
 
-        self._slider = QSlider(Qt.Horizontal)
+        match slider_type:
+            case self.Type.NORMAL:
+                self._slider = RoundHandleSlider(Qt.Horizontal, self)
+            case self.Type.RED:
+                self._slider = ColorChannelSlider("r", Qt.Horizontal, self)
+            case self.Type.GREEN:
+                self._slider = ColorChannelSlider("g", Qt.Horizontal, self)
+            case self.Type.BLUE:
+                self._slider = ColorChannelSlider("b", Qt.Horizontal, self)
+            case self.Type.ALPHA:
+                self._slider = OpacitySlider(Qt.Horizontal, self)
+            case _:
+                raise ValueError("Unknown Slider Type")
+
         self._label = QLabel("")
         self._label.setMinimumWidth(30)
         self._label.setAlignment(Qt.AlignVCenter | Qt.AlignHCenter)
