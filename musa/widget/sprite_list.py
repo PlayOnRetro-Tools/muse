@@ -5,16 +5,16 @@ from PyQt5.QtCore import (
     QAbstractListModel,
     QItemSelectionModel,
     QModelIndex,
+    QRect,
     QSize,
     Qt,
     pyqtSignal,
 )
+from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import (
     QGroupBox,
     QHBoxLayout,
-    QLabel,
     QListView,
-    QPushButton,
     QStyle,
     QStyledItemDelegate,
     QVBoxLayout,
@@ -82,10 +82,28 @@ class SpriteListModel(QAbstractListModel):
 
 
 class SpriteItemDelegate(QStyledItemDelegate):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.visible = ResourceManager.get_scaled_pixmap("eye", 16)
+        self.hidden = ResourceManager.get_scaled_pixmap("eye_off", 16)
+
     def sizeHint(self, option, index):
         return QSize(150, 30)
 
-    def paint(self, painter, option, index):
+    def icon_rect(self, rect: QRect, pixmap: QPixmap, offset_x: int = 0) -> QRect:
+        icon_rect = QRect(rect)
+        icon_rect.setWidth(pixmap.width())
+        icon_rect.setHeight(pixmap.height())
+
+        padding = 12
+
+        # Center the icon in the painter rectangle
+        x = (rect.width() - (icon_rect.width() + padding)) - offset_x
+        y = (rect.height() - icon_rect.height()) // 2
+
+        return icon_rect.translated(x, y)
+
+    def paint(self, painter, option, index: QModelIndex):
         if option.state & QStyle.State_Selected:
             painter.fillRect(option.rect, option.palette.highlight())
 
@@ -96,18 +114,17 @@ class SpriteItemDelegate(QStyledItemDelegate):
             index.data(Qt.DisplayRole),
         )
 
-        # Draw visibility icon
+        # Draw the visibility icon
         visible = index.data(Qt.UserRole)
-        icon_text = "👁️" if visible else "''👁️‍🗨️"
-        painter.drawText(
-            option.rect.adjusted(option.rect.width() - 35, 5, -5, -5),
-            Qt.AlignVCenter | Qt.AlignRight,
-            icon_text,
+        icon = self.visible if visible else self.hidden
+        painter.drawPixmap(
+            self.icon_rect(option.rect, icon),
+            icon,
         )
 
     def editorEvent(self, event, model, option, index):
         if event.type() == event.MouseButtonRelease:
-            icon_rect = option.rect.adjusted(option.rect.width() - 35, 5, -5, -5)
+            icon_rect = self.icon_rect(option.rect, self.visible)
             if icon_rect.contains(event.pos()):
                 current_visibility = index.data(Qt.UserRole)
                 model.setData(index, not current_visibility, Qt.UserRole)

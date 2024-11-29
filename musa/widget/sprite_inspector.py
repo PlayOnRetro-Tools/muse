@@ -50,8 +50,10 @@ class SpriteInspector(QWidget):
         layout.setAlignment(Qt.AlignTop)
 
         self.x_spin = QSpinBox()
+        self.x_spin.setRange(-1024, 1024)
         self.x_spin.setValue(0)
         self.y_spin = QSpinBox()
+        self.y_spin.setRange(-1024, 1024)
         self.y_spin.setValue(0)
         self.hflip = QCheckBox("Horizontal")
         self.vflip = QCheckBox("Vertical")

@@ -9,8 +9,6 @@
         <file alias="drag-move">icons/drag-move-fill.png</file>
         <file alias="dropper">icons/dropper-fill.png</file>
         <file alias="edit">icons/edit-2-fill.png</file>
-        <file alias="eye">icons/eye-fill.png</file>
-        <file alias="eye_off">icons/eye-off-fill.png</file>
         <file alias="file">icons/file-2-fill.png</file>
         <file alias="file_add">icons/file-add-fill.png</file>
         <file alias="settings">icons/settings-2-fill.png</file>
@@ -19,5 +17,9 @@
         <file alias="muse_32">icons/muse_32.png</file>
         <file alias="muse_64">icons/muse_64.png</file>
         <file alias="muse_128">icons/muse_128.png</file>
+    </qresource>
+    <qresource prefix="image">
+        <file alias="eye">image/eye-fill.png</file>
+        <file alias="eye_off">image/eye-off-fill.png</file>
     </qresource>
 </RCC>

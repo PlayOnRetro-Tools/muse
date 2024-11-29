@@ -29,16 +29,22 @@ class ResourceManager:
     @staticmethod
     def get_pixmap(name: str) -> QPixmap:
         if name not in ResourceManager._pixmap_cache:
-            ResourceManager._pixmap_cache[name] = QPixmap(f"f:images/{name}")
+            ResourceManager._pixmap_cache[name] = QPixmap(f":image/{name}")
         return ResourceManager._pixmap_cache[name]
 
     @staticmethod
+    def get_scaled_pixmap(name: str, size: int) -> QPixmap:
+        id = f"{name}_{size}"
+        if id not in ResourceManager._pixmap_cache:
+            pixmap = QPixmap(f":image/{name}").scaled(
+                size, size, Qt.KeepAspectRatio, Qt.SmoothTransformation
+            )
+            ResourceManager._pixmap_cache[id] = pixmap
+        return ResourceManager._pixmap_cache[id]
+
+    @staticmethod
     def get_stylesheet(name: str) -> str:
-        file = QFile(f"styles/{name}")
+        file = QFile(f":styles/{name}")
         if file.open(QIODevice.ReadOnly | QIODevice.Text):
             return str(file.readAll(), encoding="utf-8")
         return ""
-
-    @staticmethod
-    def preload_resources(resources: str) -> None:
-        pass
