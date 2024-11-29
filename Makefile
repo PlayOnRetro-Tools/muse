@@ -9,14 +9,13 @@ PY_RESOURCES := $(QRC_FILES:$(QRC_DIR)/%.qrc=musa/resources/%.py)
 
 help:
 	@echo "Available tagets:"
-	@echo " install	- Install project dependencies"
+	@echo " install     - Install project dependencies"
 	@echo " clean		- Remove build artifacts and cached files"
 	@echo " build		- Build the application"
 	@echo " run 		- Run the application locally"
 	@echo " lint		- Format the code"
 	@echo " resources 	- Compile .qrc files to python"
 	@echo " test 		- Run tests"
-	@echo " dist 		- Create distributable package"
 
 install:
 	$(POETRY) install --with dev
@@ -34,7 +33,7 @@ clean:
 	@find . -type f -name "*.pyd" -delete
 
 build: clean resources
-	@$(POETRY) build
+	@$(POETRY) run pyinstaller --clean musa.spec
 
 run:
 	@$(POETRY) run python -m musa
@@ -51,6 +50,3 @@ resources: $(PY_RESOURCES)
 musa/resources/%.py: $(QRC_DIR)/%.qrc
 	@mkdir -p musa/resources
 	@$(POETRY) run $(PYRCC) $< -o $@
-
-dist: clean resources
-	@$(POETRY) run pyinstaller --clean --windowed build_spec.py

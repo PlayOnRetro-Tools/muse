@@ -28,7 +28,7 @@ jobs:
         run: poetry install
 
       - name: Build with pyinstaller
-        run: poetry run python build_scripts.py
+        run: poetry run pyinstaller --clean musa.spec
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2

@@ -56,7 +56,7 @@ class MusaMainWindow(QMainWindow):
             DockConfig(
                 "Animation",
                 DockConfig.Area.BOTTOM,
-                DockConfig.Area.BOTTOM | DockConfig.Area.TOP,
+                DockConfig.Area.TOP | DockConfig.Area.BOTTOM,
                 self.animation,
             ),
         )
